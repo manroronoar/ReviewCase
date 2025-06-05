@@ -1,0 +1,63 @@
+﻿<Window x:Class="WpfTestCase.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfTestCase"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="720" Width="1280">
+    <Grid Margin="10,10,10,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <!-- สำหรับปุ่มและ TextBox -->
+            <RowDefinition Height="Auto"/>
+            <!-- สำหรับ Progress Bar -->
+            <RowDefinition Height="*"/>
+            <!-- สำหรับ DataGrid -->
+        </Grid.RowDefinitions>
+
+
+        <StackPanel Orientation="Horizontal" Margin="10,4,10,5" Grid.Row="0">
+            <TextBox x:Name="FilePathTextBox" Width="274" Height="26" RenderTransformOrigin="0.452,0.241" Margin="0,0,20,0" IsReadOnly="True" IsUndoEnabled="False"/>
+            <Button x:Name="BrowseButton" Content="Browse..." Click="BrowseButton_Click" Width="80" Height="27"/>
+            <Border Width="25" />
+            <TextBox x:Name="Txt01" Width="152" Height="26" RenderTransformOrigin="0.452,0.241"  IsUndoEnabled="False" Margin="0,0,20,0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"/>
+            <Button x:Name="Button01" Content="Search"  Width="94" Height="27" Click="Button01_Click"/>
+            <Border Width="20" />
+            <Button x:Name="ClearButton" Content="Clear" Width="74" Height="27" Click="ClearButton_Click" />
+        </StackPanel>
+
+        <!-- Progress Bar -->
+        <StackPanel Grid.Row="1" Orientation="Vertical" Margin="10,5,10,5">
+            <ProgressBar x:Name="ProgressBar" Height="20" Minimum="0" Maximum="100" Width="Auto"/>
+            <TextBlock x:Name="ProgressText" Text="0%" HorizontalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- DataGrid -->
+        <DataGrid x:Name="DgLoadExcel" Grid.Row="2" 
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  SelectionMode="Single" Margin="0,0,0,8">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Run No" Binding="{Binding RunNo}" Width="auto"/>
+                <DataGridTextColumn Header="No." Binding="{Binding Number}" Width="auto"/>
+                <DataGridTextColumn Header="MM" Binding="{Binding MM}" Width="auto"/>
+                <DataGridTextColumn Header="TRNDATE" Binding="{Binding TransactionDate}" Width="auto"/>
+                <DataGridTextColumn Header="ORDERID" Binding="{Binding OrderId}" Width="auto"/>
+                <DataGridTextColumn Header="TICKETNO" Binding="{Binding TicketNo}" Width="auto"/>
+                <DataGridTextColumn Header="SAMEDAY" Binding="{Binding IsSameDay}" Width="auto"/>
+                <DataGridTextColumn Header="DELIVERY" Binding="{Binding Delivery}" Width="auto"/>
+                <DataGridTextColumn Header="STATUS" Binding="{Binding Status}" Width="auto"/>
+                <DataGridTextColumn Header="Order Error" Binding="{Binding OrderError}" Width="auto"/>
+                <DataGridTextColumn Header="POS" Binding="{Binding Pos}" Width="auto"/>
+                <DataGridTextColumn Header="Root Cause" Binding="{Binding RootCause}" Width="auto"/>
+                <DataGridTextColumn Header="ERROR" Binding="{Binding Error}" Width="auto"/>
+                <DataGridTextColumn Header="JOB" Binding="{Binding Job}" Width="80"/>
+                <DataGridTextColumn Header="Case IR No" Binding="{Binding CaseIrNo}" Width="100"/>
+                <DataGridTextColumn Header="USER" Binding="{Binding User}" Width="auto"/>
+                <DataGridTextColumn Header="Case Reviews" Binding="{Binding CaseReviews}" Width="auto"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+
+</Window>

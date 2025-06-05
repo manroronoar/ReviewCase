@@ -1,2 +1,1 @@
-# ReviewCase
-review case
+# WpfTestCase
