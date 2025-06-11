@@ -9,7 +9,7 @@ namespace WpfTestCase
     public class CaseType
     {
         public string CaseTypeReviews { get; set; } = string.Empty;
-        public bool Starus { get; set; } = false;
+        public bool StatusCase { get; set; } = false;
     }
     public class Order
     {

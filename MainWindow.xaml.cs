@@ -41,7 +41,35 @@ namespace WpfTestCase
             //ProcessEvents(test, "sss");
             //DgLoadExcel.Visibility = Visibility.Collapsed;
         }
+        private void ClearButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // เคลียร์ช่องที่อยู่ไฟล์
+                FilePathTextBox.Text = string.Empty;
 
+                // เคลียร์ช่องค้นหา
+                Txt01.Text = string.Empty;
+
+                // เคลียร์ DataGrid
+                DgLoadExcel.ItemsSource = null;
+                //DgLoadExcel.Visibility = Visibility.Collapsed;
+
+                // รีเซ็ต Progress Bar
+                ProgressBar.Value = 0;
+                ProgressText.Text = "0%";
+
+                // โฟกัสกลับไปที่ช่องค้นหา
+                Txt01.Focus();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"เกิดข้อผิดพลาดขณะเคลียร์ข้อมูล: {ex.Message}",
+                              "ข้อผิดพลาด",
+                              MessageBoxButton.OK,
+                              MessageBoxImage.Error);
+            }
+        }
         private async void Button01_Click(object sender, RoutedEventArgs e)
         {
 
@@ -296,9 +324,30 @@ namespace WpfTestCase
                     {
                         e.CaseReviews = "logic Case 1 2 3 4 5 6";
 
+                        // หาแพตเทอว่าอยู่ในรูปแบบ box แบบไหนก่อน
+                        //
+
+                        #region 1. Server DS Down ชั่วคราว
+                        var sss = TempServerDSDown(lstEvents);
+                        #endregion
+
+                        #region 2.logic Stock หน้า web คำนวนผิด
+                        #endregion
+
+                        #region 3. Stock ds หมดระหว่างจองคิว
+                        #endregion
+
+                        #region 4. Capa เป็น 0 หน้า web ปล่อยซื้อได้
+                        #endregion
+
+                        #region 5. Capa ds  เป็น 0 ไม่สามารถจองคิวได้
+                        #endregion
+
+                        #region 6. Capa ds  มี Stock  มี จองคิวไม่ได้
+                        #endregion
+
                         #region logic Stock หน้า web คำนวนผิด && logic Stock ds หมดระหว่างจองคิว
-                        //todo logic  
-                        //index 0  //index 3
+
                         JsonDsResponse? responseBox0 = JsonConvert.DeserializeObject<JsonDsResponse>(dataSeq[0].Resp) ?? null;
                         JsonDsResponse? responseBox2 = JsonConvert.DeserializeObject<JsonDsResponse>(dataSeq[2].Resp) ?? null;
 
@@ -324,6 +373,87 @@ namespace WpfTestCase
                 i++;
             }
             return await Task.FromResult(order);
+        }
+
+
+        //TempServerDSDown
+        //WebStockLogicError
+        //StockDSOutDuringQueue
+        //WebPurchaseAllowedZeroCapa
+        //QueueBlockedZeroCapaDS
+        //QueueBlockedDespiteStockCapaDS
+
+
+        public async Task<CaseType> TempServerDSDown(List<TbEvents> lstEvents)
+        {
+            CaseType caseType = new CaseType();
+            try 
+            {
+                //1. Server DS Down ชั่วคราว
+                List<TbEvents> res =  lstEvents.Where(e => e.HttpStatus.ToString() != "200").ToList();
+                if (res.Any())
+                {
+                    caseType.StatusCase = true;
+                    caseType.CaseTypeReviews = "Server DS Down ชั่วคราว";
+                }
+            }
+            catch { }
+            return await Task.FromResult(caseType);
+        }
+
+        public async Task<CaseType> WebStockLogicError()
+        {
+            CaseType caseType = new CaseType();
+            try 
+            {
+                //2. logic Stock หน้า web คำนวนผิด
+            }
+            catch { }
+            return await Task.FromResult(caseType);
+        }
+
+        public async Task<CaseType> StockDSOutDuringQueue()
+        {
+            CaseType caseType = new CaseType();
+            try 
+            {
+                //3.Stock ds หมดระหว่างจองคิว
+            }
+            catch { }
+            return await Task.FromResult(caseType);
+        }
+
+        public async Task<CaseType> WebPurchaseAllowedZeroCapa()
+        {
+            CaseType caseType = new CaseType();
+            try 
+            {
+                //4. Capa เป็น 0 หน้า web ปล่อยซื้อได้
+            }
+            catch { }
+            return await Task.FromResult(caseType);
+        }
+
+        public async Task<CaseType> QueueBlockedZeroCapaDS()
+        {
+            CaseType caseType = new CaseType();
+            try 
+            {
+                //5. Capa ds  เป็น 0 ไม่สามารถจองคิวได้
+            }
+            catch { }
+            return await Task.FromResult(caseType);
+        }
+
+        public async Task<CaseType> QueueBlockedDespiteStockCapaDS()
+        {
+            CaseType caseType = new CaseType();
+            try 
+            {
+                //6. Capa ds  มี Stock  มี จองคิวไม่ได้
+            }
+            catch { }
+            return await Task.FromResult(caseType);
         }
         public async Task<CaseType> LogicStock(JsonDsResponse a, JsonDsResponse b,string sameday)
         {
@@ -446,35 +576,7 @@ namespace WpfTestCase
             return await Task.FromResult(caseType);
         }
 
-        private void ClearButton_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                // เคลียร์ช่องที่อยู่ไฟล์
-                FilePathTextBox.Text = string.Empty;
-
-                // เคลียร์ช่องค้นหา
-                Txt01.Text = string.Empty;
-
-                // เคลียร์ DataGrid
-                DgLoadExcel.ItemsSource = null;
-                //DgLoadExcel.Visibility = Visibility.Collapsed;
-
-                // รีเซ็ต Progress Bar
-                ProgressBar.Value = 0;
-                ProgressText.Text = "0%";
-
-                // โฟกัสกลับไปที่ช่องค้นหา
-                Txt01.Focus();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"เกิดข้อผิดพลาดขณะเคลียร์ข้อมูล: {ex.Message}",
-                              "ข้อผิดพลาด",
-                              MessageBoxButton.OK,
-                              MessageBoxImage.Error);
-            }
-        }
+       
     }
 
 }
