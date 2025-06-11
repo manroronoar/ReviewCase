@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using DocumentFormat.OpenXml.Office2013.Excel;
 using DocumentFormat.OpenXml.Drawing.Charts;
+using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace WpfTestCase
 {
@@ -97,7 +98,7 @@ namespace WpfTestCase
                     DgLoadExcel.ItemsSource = processData;
                     DgLoadExcel.Visibility = Visibility.Visible;
                 }
-                else 
+                else
                 {
                     MessageBox.Show($"Input value", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
@@ -138,7 +139,7 @@ namespace WpfTestCase
                     var rawDataExcels = await GetOrderList(filePath);
                     var rawDataExcel = rawDataExcels.ToList();
 
-                    var processData = await ProcessEventsStatus(rawDataExcel.ToList(),progress);
+                    var processData = await ProcessEventsStatus(rawDataExcel.ToList(), progress);
 
                     DgLoadExcel.ItemsSource = processData;
                     DgLoadExcel.Visibility = Visibility.Visible;
@@ -255,60 +256,44 @@ namespace WpfTestCase
             }
             return await Task.FromResult(lstEvents);
         }
-        public List<TbEvents> SequenceEventsStructureOne(List<TbEvents> events)
+        public async Task<PatternTbEvents> SequenceEventsStructureOne(List<TbEvents> events)
         {
+            PatternTbEvents pattern = new PatternTbEvents();
             List<TbEvents> lis = new List<TbEvents>();
-            List<TbEvents> lisEvent = new List<TbEvents>();
-            int i = 1;
+            //int i = 1;
 
-            foreach (TbEvents e in events)
+            var e = events;
+            if (e.Any())
             {
-                if (i <= 6)
+                var count = e.Count;
+
+                //Pattern seq 1
+                if (e[0].Type == "ORDER" && e[1].Type == "QUEUE" && e[2].Type == "QUEUE" && e[3].Type == "QUEUE" && e[4].Type == "CUSTOMER" && e[5].Type == "QUEUE")
                 {
-                    if (i == 1 && e.Type == "ORDER")
+                    pattern.SeqPattern = 1;
+                    pattern.SeqCount = 6;
+                }
+
+                int i = 0;
+                int seqCount = pattern.SeqCount;
+                foreach (TbEvents item in events)
+                {
+                    if (i < pattern.SeqCount)
                     {
-                        e.Seq = 6;
-                        lis.Add(e);
+                        item.Seq = seqCount;
+                        lis.Add(item);
                     }
-                    else if (i == 2 && e.Type == "QUEUE")
+                    else 
                     {
-                        e.Seq = 5;
-                        lis.Add(e);
+                        break;
                     }
-                    else if (i == 3 && e.Type == "QUEUE")
-                    {
-                        e.Seq = 4;
-                        lis.Add(e);
-                    }
-                    else if (i == 4 && e.Type == "QUEUE")
-                    {
-                        e.Seq = 3;
-                        lis.Add(e);
-                    }
-                    else if (i == 5 && e.Type == "CUSTOMER")
-                    {
-                        e.Seq = 2;
-                        lis.Add(e);
-                    }
-                    else if (i == 6 && e.Type == "QUEUE")
-                    {
-                        e.Seq = 1;
-                        lis.Add(e);
-                        return lis;
-                    }
-                    else
-                    {
-                        return lis = new List<TbEvents>();
-                    }
+                    seqCount--;
                     i++;
                 }
-                else
-                {
-                    return lis = new List<TbEvents>();
-                }
+                pattern.tbEvents = lis;
             }
 
-            return lis;
+            return await Task.FromResult(pattern); ;
         }
         private async Task<List<Order>> ProcessEventsStatus(List<Order> order, IProgress<int> progress)
         {
@@ -319,19 +304,19 @@ namespace WpfTestCase
                 {
 
                     List<TbEvents> lstEvents = await ConnectionDB(e.OrderId);
-                    var dataSeq = SequenceEventsStructureOne(lstEvents).OrderBy(n => n.Seq).ToList();
+                    var dataSeqEvents = await SequenceEventsStructureOne(lstEvents);
+                    var dataSeq = dataSeqEvents.tbEvents.OrderBy(x => x.Seq).ToList();
                     if (dataSeq.Any())
                     {
-                        e.CaseReviews = "logic Case 1 2 3 4 5 6";
-
                         // หาแพตเทอว่าอยู่ในรูปแบบ box แบบไหนก่อน
-                        //
 
+                        CaseType caseType = new CaseType();
                         #region 1. Server DS Down ชั่วคราว
-                        var sss = TempServerDSDown(lstEvents);
+                        caseType = await TempServerDSDown(lstEvents);
                         #endregion
 
                         #region 2.logic Stock หน้า web คำนวนผิด
+
                         #endregion
 
                         #region 3. Stock ds หมดระหว่างจองคิว
@@ -347,21 +332,33 @@ namespace WpfTestCase
                         #endregion
 
                         #region logic Stock หน้า web คำนวนผิด && logic Stock ds หมดระหว่างจองคิว
-
-                        JsonDsResponse? responseBox0 = JsonConvert.DeserializeObject<JsonDsResponse>(dataSeq[0].Resp) ?? null;
-                        JsonDsResponse? responseBox2 = JsonConvert.DeserializeObject<JsonDsResponse>(dataSeq[2].Resp) ?? null;
-
-                        CaseType caseType = await LogicStock(responseBox0, responseBox2, e.IsSameDay ?? "");
-                        if (caseType.CaseTypeReviews != "")
+                        if (caseType != null)
                         {
-                            e.CaseReviews = caseType.CaseTypeReviews;
+                            JsonDsResponse? responseBox0 = JsonConvert.DeserializeObject<JsonDsResponse>(dataSeq[0].Resp) ?? null;
+                            JsonDsResponse? responseBox2 = JsonConvert.DeserializeObject<JsonDsResponse>(dataSeq[2].Resp) ?? null;
+
+                            caseType = await LogicStock(responseBox0, responseBox2, e.IsSameDay ?? "");
+                            if (caseType.CaseTypeReviews != "")
+                            {
+                                e.CaseReviews = caseType.CaseTypeReviews;
+                            }
                         }
                         #endregion
 
                     }
                     else
                     {
-                        e.CaseReviews = "Ignore Block Flow";
+                        CaseType caseType = new CaseType();
+                        #region 1. Server DS Down ชั่วคราว
+                        caseType = await TempServerDSDown(lstEvents);
+                        e.CaseReviews = caseType.CaseTypeReviews;
+                        #endregion
+
+                        if (caseType == null)
+                        {
+                            e.CaseReviews = "Ignore Block Flow";
+                        }
+
                     }
                 }
                 // อัปเดต Progress (คำนวณเปอร์เซ็นต์)
@@ -374,23 +371,13 @@ namespace WpfTestCase
             }
             return await Task.FromResult(order);
         }
-
-
-        //TempServerDSDown
-        //WebStockLogicError
-        //StockDSOutDuringQueue
-        //WebPurchaseAllowedZeroCapa
-        //QueueBlockedZeroCapaDS
-        //QueueBlockedDespiteStockCapaDS
-
-
         public async Task<CaseType> TempServerDSDown(List<TbEvents> lstEvents)
         {
             CaseType caseType = new CaseType();
-            try 
+            try
             {
                 //1. Server DS Down ชั่วคราว
-                List<TbEvents> res =  lstEvents.Where(e => e.HttpStatus.ToString() != "200").ToList();
+                List<TbEvents> res = lstEvents.Where(e => e.HttpStatus.ToString() != "200").ToList();
                 if (res.Any())
                 {
                     caseType.StatusCase = true;
@@ -400,62 +387,57 @@ namespace WpfTestCase
             catch { }
             return await Task.FromResult(caseType);
         }
-
         public async Task<CaseType> WebStockLogicError()
         {
             CaseType caseType = new CaseType();
-            try 
+            try
             {
                 //2. logic Stock หน้า web คำนวนผิด
             }
             catch { }
             return await Task.FromResult(caseType);
         }
-
         public async Task<CaseType> StockDSOutDuringQueue()
         {
             CaseType caseType = new CaseType();
-            try 
+            try
             {
                 //3.Stock ds หมดระหว่างจองคิว
             }
             catch { }
             return await Task.FromResult(caseType);
         }
-
         public async Task<CaseType> WebPurchaseAllowedZeroCapa()
         {
             CaseType caseType = new CaseType();
-            try 
+            try
             {
                 //4. Capa เป็น 0 หน้า web ปล่อยซื้อได้
             }
             catch { }
             return await Task.FromResult(caseType);
         }
-
         public async Task<CaseType> QueueBlockedZeroCapaDS()
         {
             CaseType caseType = new CaseType();
-            try 
+            try
             {
                 //5. Capa ds  เป็น 0 ไม่สามารถจองคิวได้
             }
             catch { }
             return await Task.FromResult(caseType);
         }
-
         public async Task<CaseType> QueueBlockedDespiteStockCapaDS()
         {
             CaseType caseType = new CaseType();
-            try 
+            try
             {
                 //6. Capa ds  มี Stock  มี จองคิวไม่ได้
             }
             catch { }
             return await Task.FromResult(caseType);
         }
-        public async Task<CaseType> LogicStock(JsonDsResponse a, JsonDsResponse b,string sameday)
+        public async Task<CaseType> LogicStock(JsonDsResponse a, JsonDsResponse b, string sameday)
         {
             CaseType caseType = new CaseType();
             bool reaA = false;
@@ -492,13 +474,13 @@ namespace WpfTestCase
                     {
                         result = true;
                         caseType.CaseTypeReviews = "logic Stock หน้า web คำนวนผิด";
-                        caseType.Starus = true;
+                        caseType.StatusCase = true;
                     }
                     else if (!reaA && reaB)
                     {
                         result = true;
                         caseType.CaseTypeReviews = "Stock ds หมดระหว่างจองคิว";
-                        caseType.Starus = true;
+                        caseType.StatusCase = true;
                     }
 
 
@@ -527,13 +509,13 @@ namespace WpfTestCase
                     {
                         result = true;
                         caseType.CaseTypeReviews = "logic Stock หน้า web คำนวนผิด";
-                        caseType.Starus = true;
+                        caseType.StatusCase = true;
                     }
                     else if (!reaA && reaB)
                     {
                         result = true;
                         caseType.CaseTypeReviews = "Stock ds หมดระหว่างจองคิว";
-                        caseType.Starus = true;
+                        caseType.StatusCase = true;
                     }
                 }
                 else if (a.InquiryNextDayRs != null && b.InquiryNextDayRs != null && !result && (sameday == "NEXTDAY" || sameday == ""))
@@ -561,22 +543,22 @@ namespace WpfTestCase
                     {
                         result = true;
                         caseType.CaseTypeReviews = ListNameCases.outOfStock;
-                        caseType.Starus = true;
+                        caseType.StatusCase = true;
                     }
                     else if (!reaA && reaB)
                     {
                         result = true;
                         caseType.CaseTypeReviews = "Stock ds หมดระหว่างจองคิว";
-                        caseType.Starus = true;
+                        caseType.StatusCase = true;
                     }
                 }
-               
+
 
             }
             return await Task.FromResult(caseType);
         }
 
-       
+
     }
 
 }

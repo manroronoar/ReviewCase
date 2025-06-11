@@ -49,6 +49,12 @@ namespace WpfTestCase
 
     }
 
+    public class PatternTbEvents
+    {
+        public List<TbEvents> tbEvents ;
+        public int SeqPattern { get; set; } = 0;
+        public int SeqCount { get; set; } = 0;
+    }
     public class Event
     {
         public string Value { get; set; }
