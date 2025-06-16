@@ -24,6 +24,9 @@ using Newtonsoft.Json;
 using DocumentFormat.OpenXml.Office2013.Excel;
 using DocumentFormat.OpenXml.Drawing.Charts;
 using DocumentFormat.OpenXml.Wordprocessing;
+using DocumentFormat.OpenXml.Office2016.Excel;
+using System.Collections.Generic;
+using DocumentFormat.OpenXml.Drawing;
 
 namespace WpfTestCase
 {
@@ -273,6 +276,10 @@ namespace WpfTestCase
                     pattern.SeqPattern = 1;
                     pattern.SeqCount = 6;
                 }
+                //Pattern seq 2
+
+
+
 
                 int i = 0;
                 int seqCount = pattern.SeqCount;
@@ -283,7 +290,7 @@ namespace WpfTestCase
                         item.Seq = seqCount;
                         lis.Add(item);
                     }
-                    else 
+                    else
                     {
                         break;
                     }
@@ -316,33 +323,30 @@ namespace WpfTestCase
                         #endregion
 
                         #region 2.logic Stock หน้า web คำนวนผิด
-
+                        if (caseType != null) continue;
+                        JsonDSRequest? req = JsonConvert.DeserializeObject<JsonDSRequest>(dataSeq[2].Resp) ?? null;
+                        JsonDSResponse? resp = JsonConvert.DeserializeObject<JsonDSResponse>(dataSeq[0].Resp) ?? null;
+                        caseType = await WebStockLogicError(req, resp);
                         #endregion
 
                         #region 3. Stock ds หมดระหว่างจองคิว
+                        if (caseType != null) continue;
                         #endregion
 
                         #region 4. Capa เป็น 0 หน้า web ปล่อยซื้อได้
+                        if (caseType != null) continue;
                         #endregion
 
                         #region 5. Capa ds  เป็น 0 ไม่สามารถจองคิวได้
+                        if (caseType != null) continue;
                         #endregion
 
                         #region 6. Capa ds  มี Stock  มี จองคิวไม่ได้
+                        if (caseType != null) continue;
                         #endregion
 
                         #region logic Stock หน้า web คำนวนผิด && logic Stock ds หมดระหว่างจองคิว
-                        if (caseType != null)
-                        {
-                            JsonDsResponse? responseBox0 = JsonConvert.DeserializeObject<JsonDsResponse>(dataSeq[0].Resp) ?? null;
-                            JsonDsResponse? responseBox2 = JsonConvert.DeserializeObject<JsonDsResponse>(dataSeq[2].Resp) ?? null;
-
-                            caseType = await LogicStock(responseBox0, responseBox2, e.IsSameDay ?? "");
-                            if (caseType.CaseTypeReviews != "")
-                            {
-                                e.CaseReviews = caseType.CaseTypeReviews;
-                            }
-                        }
+                        if (caseType != null) continue;
                         #endregion
 
                     }
@@ -356,7 +360,7 @@ namespace WpfTestCase
 
                         if (caseType == null)
                         {
-                            e.CaseReviews = "Ignore Block Flow";
+                            e.CaseReviews = "Ignore Pattern Flow";
                         }
 
                     }
@@ -387,22 +391,150 @@ namespace WpfTestCase
             catch { }
             return await Task.FromResult(caseType);
         }
-        public async Task<CaseType> WebStockLogicError()
+        public async Task<CaseType> WebStockLogicError(JsonDSRequest jsonDSRequest, JsonDSResponse jsonDsResponse)
         {
             CaseType caseType = new CaseType();
             try
             {
                 //2. logic Stock หน้า web คำนวนผิด
+                var insufficientItems = new List<string>();
+
+                // รวม ReserveDataItems จากทุก Rs (กรณีมีหลายวัน)
+                var allResponseItems = new List<ReserveResponseDataItem>();
+                if (jsonDsResponse.InquiryRs?.ReserveDataItems != null)
+                    allResponseItems.AddRange(jsonDsResponse.InquiryRs.ReserveDataItems);
+                if (jsonDsResponse.InquirySameDayRs?.ReserveDataItems != null)
+                    allResponseItems.AddRange(jsonDsResponse.InquirySameDayRs.ReserveDataItems);
+                if (jsonDsResponse.InquiryNextDayRs?.ReserveDataItems != null)
+                    allResponseItems.AddRange(jsonDsResponse.InquiryNextDayRs.ReserveDataItems);
+                if (jsonDsResponse.InquiryDeliveryNowRs?.ReserveDataItems != null)
+                    allResponseItems.AddRange(jsonDsResponse.InquiryDeliveryNowRs.ReserveDataItems);
+
+                // Loop ใน request
+                foreach (var reqGroup in jsonDSRequest.ReserveDataItems)
+                {
+                    if (!new[] { "N", "S", "X" }.Contains(reqGroup.QStyle)) continue;
+
+                    foreach (var reqItem in reqGroup.DataItems)
+                    {
+                        var artNo = reqItem.ArtNo;
+                        var reqQty = double.TryParse(reqItem.Qty, out var parsedQty) ? parsedQty : 0;
+
+                        // หา response item ที่ ArtNo ตรงกัน
+                        var matchingRespItem = allResponseItems
+                            .Where(r => r.QStyle == reqGroup.QStyle)
+                            .SelectMany(r => r.DataItems)
+                            .FirstOrDefault(d => d.ArtNo == artNo);
+
+                        if (matchingRespItem != null)
+                        {
+                            double respStockQty = 0;
+                            if (matchingRespItem.StockQty is string sqStr)
+                                double.TryParse(sqStr, out respStockQty);
+                            else if (matchingRespItem.StockQty is double sqDouble)
+                                respStockQty = sqDouble;
+                            else if (matchingRespItem.StockQty is int sqInt)
+                                respStockQty = sqInt;
+
+                            if (respStockQty < reqQty)
+                            {
+                                insufficientItems.Add($"QStyle:{reqGroup.QStyle} ArtNo:{artNo} | Stock:{respStockQty} < Request:{reqQty}");
+                            }
+                        }
+                    }
+                }
+
+
+                if (insufficientItems.Any())
+                {
+                    caseType.StatusCase = true;
+                    caseType.CaseTypeReviews = "logic Stock หน้า web คำนวนผิด";
+                }
+                return caseType;
             }
-            catch { }
+            catch
+            {
+
+            }
             return await Task.FromResult(caseType);
         }
-        public async Task<CaseType> StockDSOutDuringQueue()
+        public async Task<CaseType> StockDSOutDuringQueue(JsonDSRequest bReq, JsonDSResponse aResp, JsonDSResponse cResp)
         {
             CaseType caseType = new CaseType();
             try
             {
-                //3.Stock ds หมดระหว่างจองคิว
+                //3. Stock ds หมดระหว่างจองคิว
+                if (bReq.ReserveDataItems.Any())
+                {
+                    var aBoxResp = new List<ReserveResponseDataItem>();
+                    if (aResp.InquiryRs?.ReserveDataItems != null)
+                        aBoxResp.AddRange(aResp.InquiryRs.ReserveDataItems);
+                    if (aResp.InquirySameDayRs?.ReserveDataItems != null)
+                        aBoxResp.AddRange(aResp.InquirySameDayRs.ReserveDataItems);
+                    if (aResp.InquiryNextDayRs?.ReserveDataItems != null)
+                        aBoxResp.AddRange(aResp.InquiryNextDayRs.ReserveDataItems);
+                    if (aResp.InquiryDeliveryNowRs?.ReserveDataItems != null)
+                        aBoxResp.AddRange(aResp.InquiryDeliveryNowRs.ReserveDataItems);
+
+
+                    var cBoxResp = new List<ReserveResponseDataItem>();
+                    if (cResp.InquiryRs?.ReserveDataItems != null)
+                        cBoxResp.AddRange(cResp.InquiryRs.ReserveDataItems);
+                    if (cResp.InquirySameDayRs?.ReserveDataItems != null)
+                        cBoxResp.AddRange(cResp.InquirySameDayRs.ReserveDataItems);
+                    if (cResp.InquiryNextDayRs?.ReserveDataItems != null)
+                        cBoxResp.AddRange(cResp.InquiryNextDayRs.ReserveDataItems);
+                    if (cResp.InquiryDeliveryNowRs?.ReserveDataItems != null)
+                        cBoxResp.AddRange(cResp.InquiryDeliveryNowRs.ReserveDataItems);
+
+
+                    foreach (var item in bReq.ReserveDataItems)
+                    {
+                        var qStyle = item.QStyle;
+
+                        foreach (var dataItems in item.DataItems)
+                        {
+                            var artNo = dataItems.ArtNo;
+
+                            double reqQty = 0;
+                            if (dataItems.Qty != null)
+                            {
+                                var qtyStr = dataItems.Qty.ToString();
+                                if (!string.IsNullOrEmpty(qtyStr))
+                                {
+                                    double.TryParse(qtyStr, out reqQty);
+                                }
+                            }
+
+                            // A Resp: ต้องมี QStyle + ArtNo + StockQty >= Qty
+                            bool foundInA = aBoxResp.Any(q =>
+                            q.QStyle == qStyle &&
+                            q.DataItems.Any(d =>
+                                d.ArtNo == artNo &&
+                                d.StockQty is double stockQty &&
+                                stockQty >= reqQty
+                            ));
+
+                            // C Resp: ต้องมี QStyle + ArtNo + StockQty == 0
+                            bool foundInC = cBoxResp.Any(q =>
+                                q.QStyle == qStyle &&
+                                q.DataItems.Any(d =>
+                                    d.ArtNo == artNo &&
+                                    d.StockQty is double stockQty &&
+                                    stockQty == 0
+                                ));
+
+                            if ((foundInA && foundInC))
+                            {
+                                caseType.StatusCase = true;
+                                caseType.CaseTypeReviews = "Stock ds หมดระหว่างจองคิว";
+                                return await Task.FromResult(caseType);
+                            }
+                        }
+                    }
+                }
+
+
             }
             catch { }
             return await Task.FromResult(caseType);
@@ -437,127 +569,6 @@ namespace WpfTestCase
             catch { }
             return await Task.FromResult(caseType);
         }
-        public async Task<CaseType> LogicStock(JsonDsResponse a, JsonDsResponse b, string sameday)
-        {
-            CaseType caseType = new CaseType();
-            bool reaA = false;
-            bool reaB = false;
-            bool result = false;
-
-            if (a != null && b != null)
-            {
-
-                if ((a.InquiryRs != null && b.InquiryRs != null && !result) && (sameday == "NORMAL" || sameday == ""))
-                {
-                    foreach (var item in a.InquiryRs.ReserveDataItems)
-                    {
-                        reaA = item.DataItems.Any(p => p.StockQty == 0);
-
-                        if (reaA)
-                        {
-                            break;
-                        }
-                    }
-                    foreach (var item in b.InquiryRs.ReserveDataItems)
-                    {
-                        reaB = item.DataItems.Any(p => p.StockQty == 0);
-
-                        if (reaB)
-                        {
-                            break;
-                        }
-                    }
-                    // A = 0 and B >= 0 =   logic Stock หน้า web คำนวนผิด
-                    // A >= 0 and B = 0 =   Stock ds หมดระหว่างจองคิว
-
-                    if (reaA && !reaB)
-                    {
-                        result = true;
-                        caseType.CaseTypeReviews = "logic Stock หน้า web คำนวนผิด";
-                        caseType.StatusCase = true;
-                    }
-                    else if (!reaA && reaB)
-                    {
-                        result = true;
-                        caseType.CaseTypeReviews = "Stock ds หมดระหว่างจองคิว";
-                        caseType.StatusCase = true;
-                    }
-
-
-                }
-                else if (a.InquirySameDayRs != null && b.InquirySameDayRs != null && !result && (sameday == "SAMEDAY" || sameday == ""))
-                {
-                    foreach (var item in a.InquirySameDayRs.ReserveDataItems)
-                    {
-                        reaA = item.DataItems.Any(p => p.StockQty == 0);
-
-                        if (reaA)
-                        {
-                            break;
-                        }
-                    }
-                    foreach (var item in b.InquirySameDayRs.ReserveDataItems)
-                    {
-                        reaB = item.DataItems.Any(p => p.StockQty == 0);
-
-                        if (reaB)
-                        {
-                            break;
-                        }
-                    }
-                    if (reaA && !reaB)
-                    {
-                        result = true;
-                        caseType.CaseTypeReviews = "logic Stock หน้า web คำนวนผิด";
-                        caseType.StatusCase = true;
-                    }
-                    else if (!reaA && reaB)
-                    {
-                        result = true;
-                        caseType.CaseTypeReviews = "Stock ds หมดระหว่างจองคิว";
-                        caseType.StatusCase = true;
-                    }
-                }
-                else if (a.InquiryNextDayRs != null && b.InquiryNextDayRs != null && !result && (sameday == "NEXTDAY" || sameday == ""))
-                {
-                    foreach (var item in a.InquiryNextDayRs.ReserveDataItems)
-                    {
-                        reaA = item.DataItems.Any(p => p.StockQty == 0);
-
-                        if (reaA)
-                        {
-                            break;
-                        }
-                    }
-                    foreach (var item in b.InquiryNextDayRs.ReserveDataItems)
-                    {
-                        reaB = item.DataItems.Any(p => p.StockQty == 0);
-
-                        if (reaB)
-                        {
-                            break;
-                        }
-                    }
-
-                    if (reaA && !reaB)
-                    {
-                        result = true;
-                        caseType.CaseTypeReviews = ListNameCases.outOfStock;
-                        caseType.StatusCase = true;
-                    }
-                    else if (!reaA && reaB)
-                    {
-                        result = true;
-                        caseType.CaseTypeReviews = "Stock ds หมดระหว่างจองคิว";
-                        caseType.StatusCase = true;
-                    }
-                }
-
-
-            }
-            return await Task.FromResult(caseType);
-        }
-
 
     }
 
