@@ -22,23 +22,23 @@ namespace WpfTestCase
 
     public class InquiryRs
     {
-        public List<ArticleDeliveryFee> ArticleMinPurchaseDeliveryFees { get; set; }
-        public List<ReserveResponseDataItem> ReserveDataItems { get; set; }
+        public List<ArticleDeliveryFree> ArticleMinPurchaseDeliveryFees { get; set; }
+        public List<ResponseReserveDataItem> ReserveDataItems { get; set; }
     }
 
     public class InquirySameDayRs
     {
-        public List<ReserveResponseDataItem> ReserveDataItems { get; set; }
+        public List<ResponseReserveDataItem> ReserveDataItems { get; set; }
     }
 
     public class InquiryNextDayRs
     {
-        public List<ReserveResponseDataItem> ReserveDataItems { get; set; }
+        public List<ResponseReserveDataItem> ReserveDataItems { get; set; }
     }
 
     public class InquiryDeliveryNowRs
     {
-        public List<ReserveResponseDataItem> ReserveDataItems { get; set; }
+        public List<ResponseReserveDataItem> ReserveDataItems { get; set; }
     }
 
     public class MessageStatusRs
@@ -47,11 +47,11 @@ namespace WpfTestCase
         public string Message { get; set; }
     }
 
-    public class ReserveResponseDataItem
+    public class ResponseReserveDataItem
     {
         public string Pattype { get; set; }
         public string QStyle { get; set; }
-        public List<ArticleDeliveryFee> ArticleDeliveryFees { get; set; }
+        public List<ArticleDeliveryFree> ArticleDeliveryFees { get; set; }
         public List<ResponseDataItem> DataItems { get; set; }
         public object AvailableQty { get; set; }
         public List<TimeGroupItem> ReadyReserveTimeGrp { get; set; }
@@ -70,7 +70,7 @@ namespace WpfTestCase
         public string VendorGroupNo { get; set; }
     }
 
-    public class ArticleDeliveryFee
+    public class ArticleDeliveryFree
     {
         public string ArtNo { get; set; }
         public string ArtDesc { get; set; }

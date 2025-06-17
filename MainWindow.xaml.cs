@@ -27,6 +27,7 @@ using DocumentFormat.OpenXml.Wordprocessing;
 using DocumentFormat.OpenXml.Office2016.Excel;
 using System.Collections.Generic;
 using DocumentFormat.OpenXml.Drawing;
+using System.Linq;
 
 namespace WpfTestCase
 {
@@ -275,8 +276,13 @@ namespace WpfTestCase
                 {
                     pattern.SeqPattern = 1;
                     pattern.SeqCount = 6;
+                    pattern.boxA = 0;
+                    pattern.boxB = 2;
+                    pattern.boxC = 3;
+                    pattern.boxD = 4;
+                    pattern.boxE = 5;
                 }
-                //Pattern seq 2
+                //Pattern seq 2 todo
 
 
 
@@ -320,33 +326,63 @@ namespace WpfTestCase
                         CaseType caseType = new CaseType();
                         #region 1. Server DS Down ชั่วคราว
                         caseType = await TempServerDSDown(lstEvents);
+                        if (caseType != null)
+                        {
+                            e.CaseReviews = caseType.CaseTypeReviews;
+                        }
                         #endregion
 
                         #region 2.logic Stock หน้า web คำนวนผิด
-                        if (caseType != null) continue;
-                        JsonDSRequest? req = JsonConvert.DeserializeObject<JsonDSRequest>(dataSeq[2].Resp) ?? null;
-                        JsonDSResponse? resp = JsonConvert.DeserializeObject<JsonDSResponse>(dataSeq[0].Resp) ?? null;
-                        caseType = await WebStockLogicError(req, resp);
+                        if (caseType != null)
+                        {
+                            JsonDSRequest? bReq = JsonConvert.DeserializeObject<JsonDSRequest>(dataSeq[dataSeqEvents.boxB].Req) ?? null;
+                            JsonDSResponse? aResp = JsonConvert.DeserializeObject<JsonDSResponse>(dataSeq[dataSeqEvents.boxA].Resp) ?? null;
+                            caseType = await WebStockLogicError(bReq, aResp);
+                            e.CaseReviews = caseType.CaseTypeReviews;
+                        }
                         #endregion
 
                         #region 3. Stock ds หมดระหว่างจองคิว
                         if (caseType != null) continue;
+                        {
+                            JsonDSRequest? bReq = JsonConvert.DeserializeObject<JsonDSRequest>(dataSeq[dataSeqEvents.boxB].Req) ?? null;
+                            JsonDSResponse? aResp = JsonConvert.DeserializeObject<JsonDSResponse>(dataSeq[dataSeqEvents.boxA].Resp) ?? null;
+                            JsonDSResponse? cResp = JsonConvert.DeserializeObject<JsonDSResponse>(dataSeq[dataSeqEvents.boxC].Resp) ?? null;
+                            caseType = await StockDSOutDuringQueue(bReq, aResp, cResp);
+                            e.CaseReviews = caseType.CaseTypeReviews;
+                        }
                         #endregion
 
                         #region 4. Capa เป็น 0 หน้า web ปล่อยซื้อได้
-                        if (caseType != null) continue;
+                        if (caseType != null)
+                        {
+                            JsonDSRequest? bReq = JsonConvert.DeserializeObject<JsonDSRequest>(dataSeq[dataSeqEvents.boxB].Req) ?? null;
+                            JsonDSResponse? aResp = JsonConvert.DeserializeObject<JsonDSResponse>(dataSeq[dataSeqEvents.boxA].Resp) ?? null;
+                            caseType = await WebPurchaseAllowedZeroCapa(bReq, aResp);
+                            e.CaseReviews = caseType.CaseTypeReviews;
+                        }
                         #endregion
 
                         #region 5. Capa ds  เป็น 0 ไม่สามารถจองคิวได้
                         if (caseType != null) continue;
+                        {
+                            JsonDSRequest? bReq = JsonConvert.DeserializeObject<JsonDSRequest>(dataSeq[dataSeqEvents.boxB].Req) ?? null;
+                            JsonDSResponse? aResp = JsonConvert.DeserializeObject<JsonDSResponse>(dataSeq[dataSeqEvents.boxA].Resp) ?? null;
+                            JsonDSResponse? cResp = JsonConvert.DeserializeObject<JsonDSResponse>(dataSeq[dataSeqEvents.boxC].Resp) ?? null;
+                            caseType = await QueueBlockedZeroCapaDS(bReq, aResp, cResp);
+                            e.CaseReviews = caseType.CaseTypeReviews;
+                        }
                         #endregion
 
                         #region 6. Capa ds  มี Stock  มี จองคิวไม่ได้
                         if (caseType != null) continue;
-                        #endregion
-
-                        #region logic Stock หน้า web คำนวนผิด && logic Stock ds หมดระหว่างจองคิว
-                        if (caseType != null) continue;
+                        {
+                            JsonDSRequest? bReq = JsonConvert.DeserializeObject<JsonDSRequest>(dataSeq[dataSeqEvents.boxB].Req) ?? null;
+                            JsonDSResponse? aResp = JsonConvert.DeserializeObject<JsonDSResponse>(dataSeq[dataSeqEvents.boxA].Resp) ?? null;
+                            JsonDSResponse? cResp = JsonConvert.DeserializeObject<JsonDSResponse>(dataSeq[dataSeqEvents.boxC].Resp) ?? null;
+                            caseType = await QueueBlockedDespiteStockCapaDS(bReq, aResp, cResp);
+                            e.CaseReviews = caseType.CaseTypeReviews;
+                        }
                         #endregion
 
                     }
@@ -375,12 +411,13 @@ namespace WpfTestCase
             }
             return await Task.FromResult(order);
         }
+
+        //1. Server DS Down ชั่วคราว
         public async Task<CaseType> TempServerDSDown(List<TbEvents> lstEvents)
         {
             CaseType caseType = new CaseType();
             try
             {
-                //1. Server DS Down ชั่วคราว
                 List<TbEvents> res = lstEvents.Where(e => e.HttpStatus.ToString() != "200").ToList();
                 if (res.Any())
                 {
@@ -391,27 +428,28 @@ namespace WpfTestCase
             catch { }
             return await Task.FromResult(caseType);
         }
-        public async Task<CaseType> WebStockLogicError(JsonDSRequest jsonDSRequest, JsonDSResponse jsonDsResponse)
+
+        //2. logic Stock หน้า web คำนวนผิด
+        public async Task<CaseType> WebStockLogicError(JsonDSRequest bReq, JsonDSResponse aResp)
         {
             CaseType caseType = new CaseType();
             try
             {
-                //2. logic Stock หน้า web คำนวนผิด
                 var insufficientItems = new List<string>();
 
                 // รวม ReserveDataItems จากทุก Rs (กรณีมีหลายวัน)
-                var allResponseItems = new List<ReserveResponseDataItem>();
-                if (jsonDsResponse.InquiryRs?.ReserveDataItems != null)
-                    allResponseItems.AddRange(jsonDsResponse.InquiryRs.ReserveDataItems);
-                if (jsonDsResponse.InquirySameDayRs?.ReserveDataItems != null)
-                    allResponseItems.AddRange(jsonDsResponse.InquirySameDayRs.ReserveDataItems);
-                if (jsonDsResponse.InquiryNextDayRs?.ReserveDataItems != null)
-                    allResponseItems.AddRange(jsonDsResponse.InquiryNextDayRs.ReserveDataItems);
-                if (jsonDsResponse.InquiryDeliveryNowRs?.ReserveDataItems != null)
-                    allResponseItems.AddRange(jsonDsResponse.InquiryDeliveryNowRs.ReserveDataItems);
+                var allResponseItems = new List<ResponseReserveDataItem>();
+                if (aResp.InquiryRs?.ReserveDataItems != null)
+                    allResponseItems.AddRange(aResp.InquiryRs.ReserveDataItems);
+                if (aResp.InquirySameDayRs?.ReserveDataItems != null)
+                    allResponseItems.AddRange(aResp.InquirySameDayRs.ReserveDataItems);
+                if (aResp.InquiryNextDayRs?.ReserveDataItems != null)
+                    allResponseItems.AddRange(aResp.InquiryNextDayRs.ReserveDataItems);
+                if (aResp.InquiryDeliveryNowRs?.ReserveDataItems != null)
+                    allResponseItems.AddRange(aResp.InquiryDeliveryNowRs.ReserveDataItems);
 
                 // Loop ใน request
-                foreach (var reqGroup in jsonDSRequest.ReserveDataItems)
+                foreach (var reqGroup in bReq.ReserveDataItems)
                 {
                     if (!new[] { "N", "S", "X" }.Contains(reqGroup.QStyle)) continue;
 
@@ -458,15 +496,16 @@ namespace WpfTestCase
             }
             return await Task.FromResult(caseType);
         }
+
+        //3. Stock ds หมดระหว่างจองคิว
         public async Task<CaseType> StockDSOutDuringQueue(JsonDSRequest bReq, JsonDSResponse aResp, JsonDSResponse cResp)
         {
             CaseType caseType = new CaseType();
             try
             {
-                //3. Stock ds หมดระหว่างจองคิว
                 if (bReq.ReserveDataItems.Any())
                 {
-                    var aBoxResp = new List<ReserveResponseDataItem>();
+                    var aBoxResp = new List<ResponseReserveDataItem>();
                     if (aResp.InquiryRs?.ReserveDataItems != null)
                         aBoxResp.AddRange(aResp.InquiryRs.ReserveDataItems);
                     if (aResp.InquirySameDayRs?.ReserveDataItems != null)
@@ -477,7 +516,7 @@ namespace WpfTestCase
                         aBoxResp.AddRange(aResp.InquiryDeliveryNowRs.ReserveDataItems);
 
 
-                    var cBoxResp = new List<ReserveResponseDataItem>();
+                    var cBoxResp = new List<ResponseReserveDataItem>();
                     if (cResp.InquiryRs?.ReserveDataItems != null)
                         cBoxResp.AddRange(cResp.InquiryRs.ReserveDataItems);
                     if (cResp.InquirySameDayRs?.ReserveDataItems != null)
@@ -539,32 +578,407 @@ namespace WpfTestCase
             catch { }
             return await Task.FromResult(caseType);
         }
-        public async Task<CaseType> WebPurchaseAllowedZeroCapa()
+        //4. Capa เป็น 0 หน้า web ปล่อยซื้อได้
+        public async Task<CaseType> WebPurchaseAllowedZeroCapa(JsonDSRequest bReq, JsonDSResponse aResp)
         {
             CaseType caseType = new CaseType();
             try
             {
-                //4. Capa เป็น 0 หน้า web ปล่อยซื้อได้
+                var bBoxReq = new List<ReserveDataItems>();
+                if (bReq.ReserveDataItems != null)
+                    bBoxReq.AddRange(bBoxReq);
+
+                foreach (var reqData in bBoxReq)
+                {
+                    string qStyle = reqData.QStyle;
+                    string deliveryDate = reqData.DeliveryDate;
+                    string insArticleList = reqData.InsArticleList;
+                    string timeType = reqData.TimeType;
+                    string timeNo = reqData.TimeNo;
+
+
+                    if (reqData.DataItems.Any()) continue;
+                    foreach (var dataItems in reqData.DataItems)
+                    {
+                        string artNo = dataItems.ArtNo;
+                        //200000--->Normal
+                        //7002072--->Sameday
+                        //7002131-- > Nextday
+                        if (!new[] { "200000", "7002072", "7002131" }.Contains(artNo)) continue;
+                        List<TimeGroupItem> timeGroupItem = new List<TimeGroupItem>();
+                        List<ResponseReserveDataItem> aBoxResp = new List<ResponseReserveDataItem>();
+
+                        if (aResp.InquiryRs?.ReserveDataItems != null)
+                            aBoxResp.AddRange(aResp.InquiryRs.ReserveDataItems);
+                        if (aResp.InquirySameDayRs.ReserveDataItems != null)
+                            aBoxResp.AddRange(aResp.InquirySameDayRs.ReserveDataItems);
+                        if (aResp.InquiryNextDayRs.ReserveDataItems != null)
+                            aBoxResp.AddRange(aResp.InquiryNextDayRs.ReserveDataItems);
+
+                        if (aBoxResp.Any())
+                        {
+                            //check ArtNo Time
+                            bool foundArtNo = false;
+                            bool foundTime = false;
+                            foundArtNo = aBoxResp.Any(m => m.DataItems.Any(q => q.ArtNo == artNo));
+
+                            if (foundArtNo)
+                            {
+                                if (qStyle == "N")
+                                {
+
+                                    foundTime = aBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
+                                                                                               && q.TimeGrpQty == 0
+                                                                                               && q.TimeGrpNo == timeNo));
+                                    if (!foundTime)
+                                    {
+                                        foundTime = aBoxResp.Any(m => m.ReadyReserve.Befores.Any(q => q.Date == deliveryDate
+                                                                                                   && q.Qty == 0
+                                                                                                   && q.TimeNo == timeNo));
+                                    }
+
+                                    if (!foundTime)
+                                    {
+                                        foundTime = aBoxResp.Any(m => m.ReadyReserve.Afters.Any(q => q.Date == deliveryDate
+                                                                                               && q.Qty == 0
+                                                                                               && q.TimeNo == timeNo));
+                                    }
+
+                                }
+                                else if (qStyle == "S" || qStyle == "X")
+                                {
+                                    foundTime = aBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
+                                                                                               && q.TimeGrpQty == 0
+                                                                                               && q.TimeGrpNo == timeNo));
+                                }
+
+                            }
+
+                            if (foundArtNo && foundTime)
+                            {
+                                caseType.StatusCase = true;
+                                caseType.CaseTypeReviews = "Capa เป็น 0 หน้า web ปล่อยซื้อได้ ";
+                                return await Task.FromResult(caseType);
+                            }
+                        }
+
+                    }
+                }
+
             }
             catch { }
             return await Task.FromResult(caseType);
         }
-        public async Task<CaseType> QueueBlockedZeroCapaDS()
+
+        //5. Capa ds  เป็น 0 ไม่สามารถจองคิวได้
+        public async Task<CaseType> QueueBlockedZeroCapaDS(JsonDSRequest bReq, JsonDSResponse aResp, JsonDSResponse cResp)
         {
             CaseType caseType = new CaseType();
             try
             {
-                //5. Capa ds  เป็น 0 ไม่สามารถจองคิวได้
+                var bBoxReq = new List<ReserveDataItems>();
+                if (bReq.ReserveDataItems != null)
+                    bBoxReq.AddRange(bBoxReq);
+
+                foreach (var reqData in bBoxReq)
+                {
+                    string qStyle = reqData.QStyle;
+                    string deliveryDate = reqData.DeliveryDate;
+                    string insArticleList = reqData.InsArticleList;
+                    string timeType = reqData.TimeType;
+                    string timeNo = reqData.TimeNo;
+
+
+                    if (reqData.DataItems.Any()) continue;
+                    foreach (var dataItems in reqData.DataItems)
+                    {
+                        string artNo = dataItems.ArtNo;
+                        //200000--->Normal
+                        //7002072--->Sameday
+                        //7002131-- > Nextday
+                        if (!new[] { "200000", "7002072", "7002131" }.Contains(artNo)) continue;
+                        List<TimeGroupItem> timeGroupItem = new List<TimeGroupItem>();
+                        List<ResponseReserveDataItem> aBoxResp = new List<ResponseReserveDataItem>();
+
+                        if (aResp.InquiryRs?.ReserveDataItems != null)
+                            aBoxResp.AddRange(aResp.InquiryRs.ReserveDataItems);
+                        if (aResp.InquirySameDayRs.ReserveDataItems != null)
+                            aBoxResp.AddRange(aResp.InquirySameDayRs.ReserveDataItems);
+                        if (aResp.InquiryNextDayRs.ReserveDataItems != null)
+                            aBoxResp.AddRange(aResp.InquiryNextDayRs.ReserveDataItems);
+
+                        List<ResponseReserveDataItem> cBoxResp = new List<ResponseReserveDataItem>();
+                        if (cResp.InquiryRs?.ReserveDataItems != null)
+                            cBoxResp.AddRange(cResp.InquiryRs.ReserveDataItems);
+                        if (cResp.InquirySameDayRs.ReserveDataItems != null)
+                            cBoxResp.AddRange(cResp.InquirySameDayRs.ReserveDataItems);
+                        if (cResp.InquiryNextDayRs.ReserveDataItems != null)
+                            cBoxResp.AddRange(cResp.InquiryNextDayRs.ReserveDataItems);
+
+                        bool aBoxRes = false;
+                        bool cBoxRes = false;
+
+                        #region aBoxResp
+                        if (aBoxResp.Any())
+                        {
+                            //check ArtNo Time
+                            bool foundArtNo = false;
+                            bool foundTime = false;
+                            foundArtNo = aBoxResp.Any(m => m.DataItems.Any(q => q.ArtNo == artNo));
+
+                            if (foundArtNo)
+                            {
+                                if (qStyle == "N")
+                                {
+
+                                    foundTime = aBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
+                                                                                               && q.TimeGrpQty > 0
+                                                                                               && q.TimeGrpNo == timeNo));
+                                    if (!foundTime)
+                                    {
+                                        foundTime = aBoxResp.Any(m => m.ReadyReserve.Befores.Any(q => q.Date == deliveryDate
+                                                                                                   && q.Qty > 0
+                                                                                                   && q.TimeNo == timeNo));
+                                    }
+
+                                    if (!foundTime)
+                                    {
+                                        foundTime = aBoxResp.Any(m => m.ReadyReserve.Afters.Any(q => q.Date == deliveryDate
+                                                                                               && q.Qty > 0
+                                                                                               && q.TimeNo == timeNo));
+                                    }
+
+                                }
+                                else if (qStyle == "S" || qStyle == "X")
+                                {
+                                    foundTime = aBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
+                                                                                               && q.TimeGrpQty == 0
+                                                                                               && q.TimeGrpNo == timeNo));
+                                }
+
+                            }
+
+                            if (foundArtNo && foundTime)
+                            {
+                                aBoxRes = true;
+                            }
+                        }
+                        #endregion
+
+                        #region cBoxResp
+                        if (cBoxResp.Any())
+                        {
+                            //check ArtNo Time
+                            bool foundArtNo = false;
+                            bool foundTime = false;
+                            foundArtNo = cBoxResp.Any(m => m.DataItems.Any(q => q.ArtNo == artNo));
+
+                            if (foundArtNo)
+                            {
+                                if (qStyle == "N")
+                                {
+
+                                    foundTime = cBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
+                                                                                               && q.TimeGrpQty == 0
+                                                                                               && q.TimeGrpNo == timeNo));
+                                    if (!foundTime)
+                                    {
+                                        foundTime = cBoxResp.Any(m => m.ReadyReserve.Befores.Any(q => q.Date == deliveryDate
+                                                                                                   && q.Qty == 0
+                                                                                                   && q.TimeNo == timeNo));
+                                    }
+
+                                    if (!foundTime)
+                                    {
+                                        foundTime = cBoxResp.Any(m => m.ReadyReserve.Afters.Any(q => q.Date == deliveryDate
+                                                                                               && q.Qty == 0
+                                                                                               && q.TimeNo == timeNo));
+                                    }
+
+                                }
+                                else if (qStyle == "S" || qStyle == "X")
+                                {
+                                    foundTime = cBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
+                                                                                               && q.TimeGrpQty == 0
+                                                                                               && q.TimeGrpNo == timeNo));
+                                }
+
+                            }
+
+                            if (foundArtNo && foundTime)
+                            {
+                                cBoxRes = true;
+                            }
+                        }
+                        #endregion
+
+                        if (aBoxRes && cBoxRes)
+                        {
+                            caseType.StatusCase = true;
+                            caseType.CaseTypeReviews = "Capa ds  เป็น 0 ระหว่างจองคิว";
+                            return await Task.FromResult(caseType);
+                        }
+
+                    }
+
+
+                }
             }
             catch { }
             return await Task.FromResult(caseType);
         }
-        public async Task<CaseType> QueueBlockedDespiteStockCapaDS()
+
+        //6. Capa ds  มี Stock  มี จองคิวไม่ได้
+        public async Task<CaseType> QueueBlockedDespiteStockCapaDS(JsonDSRequest bReq, JsonDSResponse aResp, JsonDSResponse cResp)
         {
             CaseType caseType = new CaseType();
             try
             {
-                //6. Capa ds  มี Stock  มี จองคิวไม่ได้
+                var bBoxReq = new List<ReserveDataItems>();
+                if (bReq.ReserveDataItems != null)
+                    bBoxReq.AddRange(bBoxReq);
+
+                foreach (var reqData in bBoxReq)
+                {
+                    string qStyle = reqData.QStyle;
+                    string deliveryDate = reqData.DeliveryDate;
+                    string insArticleList = reqData.InsArticleList;
+                    string timeType = reqData.TimeType;
+                    string timeNo = reqData.TimeNo;
+
+
+                    if (reqData.DataItems.Any()) continue;
+                    foreach (var dataItems in reqData.DataItems)
+                    {
+                        string artNo = dataItems.ArtNo;
+                        //200000--->Normal
+                        //7002072--->Sameday
+                        //7002131-- > Nextday
+                        if (!new[] { "200000", "7002072", "7002131" }.Contains(artNo)) continue;
+                        List<TimeGroupItem> timeGroupItem = new List<TimeGroupItem>();
+                        List<ResponseReserveDataItem> aBoxResp = new List<ResponseReserveDataItem>();
+
+                        if (aResp.InquiryRs?.ReserveDataItems != null)
+                            aBoxResp.AddRange(aResp.InquiryRs.ReserveDataItems);
+                        if (aResp.InquirySameDayRs.ReserveDataItems != null)
+                            aBoxResp.AddRange(aResp.InquirySameDayRs.ReserveDataItems);
+                        if (aResp.InquiryNextDayRs.ReserveDataItems != null)
+                            aBoxResp.AddRange(aResp.InquiryNextDayRs.ReserveDataItems);
+
+                        List<ResponseReserveDataItem> cBoxResp = new List<ResponseReserveDataItem>();
+                        if (cResp.InquiryRs?.ReserveDataItems != null)
+                            cBoxResp.AddRange(cResp.InquiryRs.ReserveDataItems);
+                        if (cResp.InquirySameDayRs.ReserveDataItems != null)
+                            cBoxResp.AddRange(cResp.InquirySameDayRs.ReserveDataItems);
+                        if (cResp.InquiryNextDayRs.ReserveDataItems != null)
+                            cBoxResp.AddRange(cResp.InquiryNextDayRs.ReserveDataItems);
+
+                        bool aBoxRes = false;
+                        bool cBoxRes = false;
+
+                        #region aBoxResp
+                        if (aBoxResp.Any())
+                        {
+                            //check ArtNo Time
+                            bool foundArtNo = false;
+                            bool foundTime = false;
+                            foundArtNo = aBoxResp.Any(m => m.DataItems.Any(q => q.ArtNo == artNo));
+
+                            if (foundArtNo)
+                            {
+                                if (qStyle == "N")
+                                {
+
+                                    foundTime = aBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
+                                                                                               && q.TimeGrpQty > 0
+                                                                                               && q.TimeGrpNo == timeNo));
+                                    if (!foundTime)
+                                    {
+                                        foundTime = aBoxResp.Any(m => m.ReadyReserve.Befores.Any(q => q.Date == deliveryDate
+                                                                                                   && q.Qty > 0
+                                                                                                   && q.TimeNo == timeNo));
+                                    }
+
+                                    if (!foundTime)
+                                    {
+                                        foundTime = aBoxResp.Any(m => m.ReadyReserve.Afters.Any(q => q.Date == deliveryDate
+                                                                                               && q.Qty > 0
+                                                                                               && q.TimeNo == timeNo));
+                                    }
+
+                                }
+                                else if (qStyle == "S" || qStyle == "X")
+                                {
+                                    foundTime = aBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
+                                                                                               && q.TimeGrpQty > 0
+                                                                                               && q.TimeGrpNo == timeNo));
+                                }
+
+                            }
+
+                            if (foundArtNo && foundTime)
+                            {
+                                aBoxRes = true;
+                            }
+                        }
+                        #endregion
+
+                        #region cBoxResp
+                        if (cBoxResp.Any())
+                        {
+                            //check ArtNo Time
+                            bool foundArtNo = false;
+                            bool foundTime = false;
+                            foundArtNo = cBoxResp.Any(m => m.DataItems.Any(q => q.ArtNo == artNo));
+
+                            if (foundArtNo)
+                            {
+                                if (qStyle == "N")
+                                {
+
+                                    foundTime = cBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
+                                                                                               && q.TimeGrpQty > 0
+                                                                                               && q.TimeGrpNo == timeNo));
+                                    if (!foundTime)
+                                    {
+                                        foundTime = cBoxResp.Any(m => m.ReadyReserve.Befores.Any(q => q.Date == deliveryDate
+                                                                                                   && q.Qty > 0
+                                                                                                   && q.TimeNo == timeNo));
+                                    }
+
+                                    if (!foundTime)
+                                    {
+                                        foundTime = cBoxResp.Any(m => m.ReadyReserve.Afters.Any(q => q.Date == deliveryDate
+                                                                                               && q.Qty > 0
+                                                                                               && q.TimeNo == timeNo));
+                                    }
+
+                                }
+                                else if (qStyle == "S" || qStyle == "X")
+                                {
+                                    foundTime = cBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
+                                                                                               && q.TimeGrpQty > 0
+                                                                                               && q.TimeGrpNo == timeNo));
+                                }
+
+                            }
+
+                            if (foundArtNo && foundTime)
+                            {
+                                cBoxRes = true;
+                            }
+                        }
+                        #endregion
+
+                        if (aBoxRes && cBoxRes)
+                        {
+                            caseType.StatusCase = true;
+                            caseType.CaseTypeReviews = "Capa ds  มี Stock  มี จองคิวไม่ได้";
+                            return await Task.FromResult(caseType);
+                        }
+
+                    }
+                }
             }
             catch { }
             return await Task.FromResult(caseType);
