@@ -578,6 +578,7 @@ namespace WpfTestCase
             catch { }
             return await Task.FromResult(caseType);
         }
+        
         //4. Capa เป็น 0 หน้า web ปล่อยซื้อได้
         public async Task<CaseType> WebPurchaseAllowedZeroCapa(JsonDSRequest bReq, JsonDSResponse aResp)
         {
