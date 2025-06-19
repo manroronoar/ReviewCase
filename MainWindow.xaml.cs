@@ -272,18 +272,73 @@ namespace WpfTestCase
                 var count = e.Count;
 
                 //Pattern seq 1
-                if (e[0].Type == "ORDER" && e[1].Type == "QUEUE" && e[2].Type == "QUEUE" && e[3].Type == "QUEUE" && e[4].Type == "CUSTOMER" && e[5].Type == "QUEUE")
+                if (e[0].Type == "ORDER"
+                    && e[1].Type == "QUEUE"
+                    && e[2].Type == "QUEUE"
+                    && e[3].Type == "QUEUE"
+                    && e[4].Type == "CUSTOMER"
+                    && e[5].Type == "QUEUE")
                 {
                     pattern.SeqPattern = 1;
                     pattern.SeqCount = 6;
-                    pattern.boxA = 0;
-                    pattern.boxB = 2;
-                    pattern.boxC = 3;
-                    pattern.boxD = 4;
-                    pattern.boxE = 5;
+                    pattern.boxA = 5;
+                    pattern.boxB = 3;
+                    pattern.boxC = 2;
+                    pattern.boxD = 1;
+                    pattern.boxE = 0;
                 }
                 //Pattern seq 2 todo
-
+                else if (e[0].Type == "ORDER"
+                    && e[1].Type == "ORDER"
+                    && e[2].Type == "QUEUE"
+                    && e[3].Type == "QUEUE"
+                    && e[4].Type == "QUEUE"
+                    && e[5].Type == "CUSTOMER"
+                    && e[6].Type == "QUEUE")
+                {
+                    pattern.SeqPattern = 2;
+                    pattern.SeqCount = 7;
+                    pattern.boxA = 6;
+                    pattern.boxB = 4;
+                    pattern.boxC = 3;
+                    pattern.boxD = 2;
+                    pattern.boxE = 1;
+                }
+                //Pattern seq 3 todo
+                else if (e[0].Type == "ORDER"
+                    && e[1].Type == "QUEUE"
+                    && e[2].Type == "QUEUE"
+                    && e[3].Type == "QUEUE"
+                    && e[4].Type == "CUSTOMER"
+                    && e[5].Type == "CUSTOMER"
+                    && e[6].Type == "QUEUE")
+                {
+                    pattern.SeqPattern = 3;
+                    pattern.SeqCount = 7;
+                    pattern.boxA = 6;
+                    pattern.boxB = 3;
+                    pattern.boxC = 2;
+                    pattern.boxD = 1;
+                    pattern.boxE = 0;
+                }
+                //Pattern seq 4 todo
+                else if (e[0].Type == "ORDER"
+                    && e[1].Type == "QUEUE"
+                    && e[2].Type == "QUEUE"
+                    && e[3].Type == "QUEUE"
+                    && e[4].Type == "CUSTOMER"
+                    && e[5].Type == "CUSTOMER"
+                    && e[6].Type == "CUSTOMER"
+                    && e[7].Type == "QUEUE")
+                {
+                    pattern.SeqPattern = 4;
+                    pattern.SeqCount = 8;
+                    pattern.boxA = 7;
+                    pattern.boxB = 3;
+                    pattern.boxC = 2;
+                    pattern.boxD = 1;
+                    pattern.boxE = 0;
+                }
 
 
 
@@ -318,7 +373,8 @@ namespace WpfTestCase
 
                     List<TbEvents> lstEvents = await ConnectionDB(e.OrderId);
                     var dataSeqEvents = await SequenceEventsStructureOne(lstEvents);
-                    var dataSeq = dataSeqEvents.tbEvents.OrderBy(x => x.Seq).ToList();
+                    //var dataSeq = dataSeqEvents.tbEvents.OrderBy(x => x.Seq).ToList();
+                    var dataSeq = dataSeqEvents.tbEvents.ToList();
                     if (dataSeq.Any())
                     {
                         // หาแพตเทอว่าอยู่ในรูปแบบ box แบบไหนก่อน
@@ -326,14 +382,14 @@ namespace WpfTestCase
                         CaseType caseType = new CaseType();
                         #region 1. Server DS Down ชั่วคราว
                         caseType = await TempServerDSDown(lstEvents);
-                        if (caseType != null)
+                        if (!caseType.StatusCase)
                         {
                             e.CaseReviews = caseType.CaseTypeReviews;
                         }
                         #endregion
 
                         #region 2.logic Stock หน้า web คำนวนผิด
-                        if (caseType != null)
+                        if (!caseType.StatusCase)
                         {
                             JsonDSRequest? bReq = JsonConvert.DeserializeObject<JsonDSRequest>(dataSeq[dataSeqEvents.boxB].Req) ?? null;
                             JsonDSResponse? aResp = JsonConvert.DeserializeObject<JsonDSResponse>(dataSeq[dataSeqEvents.boxA].Resp) ?? null;
@@ -343,7 +399,7 @@ namespace WpfTestCase
                         #endregion
 
                         #region 3. Stock ds หมดระหว่างจองคิว
-                        if (caseType != null) continue;
+                        if (!caseType.StatusCase)
                         {
                             JsonDSRequest? bReq = JsonConvert.DeserializeObject<JsonDSRequest>(dataSeq[dataSeqEvents.boxB].Req) ?? null;
                             JsonDSResponse? aResp = JsonConvert.DeserializeObject<JsonDSResponse>(dataSeq[dataSeqEvents.boxA].Resp) ?? null;
@@ -354,7 +410,7 @@ namespace WpfTestCase
                         #endregion
 
                         #region 4. Capa เป็น 0 หน้า web ปล่อยซื้อได้
-                        if (caseType != null)
+                        if (!caseType.StatusCase)
                         {
                             JsonDSRequest? bReq = JsonConvert.DeserializeObject<JsonDSRequest>(dataSeq[dataSeqEvents.boxB].Req) ?? null;
                             JsonDSResponse? aResp = JsonConvert.DeserializeObject<JsonDSResponse>(dataSeq[dataSeqEvents.boxA].Resp) ?? null;
@@ -364,7 +420,7 @@ namespace WpfTestCase
                         #endregion
 
                         #region 5. Capa ds  เป็น 0 ไม่สามารถจองคิวได้
-                        if (caseType != null) continue;
+                        if (!caseType.StatusCase)
                         {
                             JsonDSRequest? bReq = JsonConvert.DeserializeObject<JsonDSRequest>(dataSeq[dataSeqEvents.boxB].Req) ?? null;
                             JsonDSResponse? aResp = JsonConvert.DeserializeObject<JsonDSResponse>(dataSeq[dataSeqEvents.boxA].Resp) ?? null;
@@ -375,7 +431,7 @@ namespace WpfTestCase
                         #endregion
 
                         #region 6. Capa ds  มี Stock  มี จองคิวไม่ได้
-                        if (caseType != null) continue;
+                        if (!caseType.StatusCase)
                         {
                             JsonDSRequest? bReq = JsonConvert.DeserializeObject<JsonDSRequest>(dataSeq[dataSeqEvents.boxB].Req) ?? null;
                             JsonDSResponse? aResp = JsonConvert.DeserializeObject<JsonDSResponse>(dataSeq[dataSeqEvents.boxA].Resp) ?? null;
@@ -429,7 +485,7 @@ namespace WpfTestCase
             return await Task.FromResult(caseType);
         }
 
-        //2. logic Stock หน้า web คำนวนผิด
+        //2. logic Stock หน้า web คำนวนผิด  //O5544345//O5598901//5620571//5615499//5652193
         public async Task<CaseType> WebStockLogicError(JsonDSRequest bReq, JsonDSResponse aResp)
         {
             CaseType caseType = new CaseType();
@@ -466,17 +522,20 @@ namespace WpfTestCase
 
                         if (matchingRespItem != null)
                         {
-                            double respStockQty = 0;
-                            if (matchingRespItem.StockQty is string sqStr)
-                                double.TryParse(sqStr, out respStockQty);
-                            else if (matchingRespItem.StockQty is double sqDouble)
-                                respStockQty = sqDouble;
-                            else if (matchingRespItem.StockQty is int sqInt)
-                                respStockQty = sqInt;
-
-                            if (respStockQty < reqQty)
+                            if (matchingRespItem.StockQty != null)
                             {
-                                insufficientItems.Add($"QStyle:{reqGroup.QStyle} ArtNo:{artNo} | Stock:{respStockQty} < Request:{reqQty}");
+                                double respStockQty = 0;
+                                if (matchingRespItem.StockQty is string sqStr)
+                                    double.TryParse(sqStr, out respStockQty);
+                                else if (matchingRespItem.StockQty is double sqDouble)
+                                    respStockQty = sqDouble;
+                                else if (matchingRespItem.StockQty is int sqInt)
+                                    respStockQty = sqInt;
+
+                                if (respStockQty < reqQty)
+                                {
+                                    insufficientItems.Add($"QStyle:{reqGroup.QStyle} ArtNo:{artNo} | Stock:{respStockQty} < Request:{reqQty}");
+                                }
                             }
                         }
                     }
@@ -497,7 +556,8 @@ namespace WpfTestCase
             return await Task.FromResult(caseType);
         }
 
-        //3. Stock ds หมดระหว่างจองคิว
+        //3. Stock ds หมดระหว่างจองคิว//O6021351//O6029970
+
         public async Task<CaseType> StockDSOutDuringQueue(JsonDSRequest bReq, JsonDSResponse aResp, JsonDSResponse cResp)
         {
             CaseType caseType = new CaseType();
@@ -578,8 +638,9 @@ namespace WpfTestCase
             catch { }
             return await Task.FromResult(caseType);
         }
-        
+
         //4. Capa เป็น 0 หน้า web ปล่อยซื้อได้
+        //ข้อ 4.ถามคิว Capa เป็น 0 หน้าเว็ปปล่อยซื้อได้//O5920710//O6020838//O6028021
         public async Task<CaseType> WebPurchaseAllowedZeroCapa(JsonDSRequest bReq, JsonDSResponse aResp)
         {
             CaseType caseType = new CaseType();
@@ -587,7 +648,7 @@ namespace WpfTestCase
             {
                 var bBoxReq = new List<ReserveDataItems>();
                 if (bReq.ReserveDataItems != null)
-                    bBoxReq.AddRange(bBoxReq);
+                    bBoxReq.AddRange(bReq.ReserveDataItems);
 
                 foreach (var reqData in bBoxReq)
                 {
@@ -672,6 +733,7 @@ namespace WpfTestCase
         }
 
         //5. Capa ds  เป็น 0 ไม่สามารถจองคิวได้
+        //ข้อ 5.Capa หมด ระหว่างจองคิว//O5957695//O5957273//O5957200
         public async Task<CaseType> QueueBlockedZeroCapaDS(JsonDSRequest bReq, JsonDSResponse aResp, JsonDSResponse cResp)
         {
             CaseType caseType = new CaseType();
@@ -679,7 +741,7 @@ namespace WpfTestCase
             {
                 var bBoxReq = new List<ReserveDataItems>();
                 if (bReq.ReserveDataItems != null)
-                    bBoxReq.AddRange(bBoxReq);
+                    bBoxReq.AddRange(bReq.ReserveDataItems);
 
                 foreach (var reqData in bBoxReq)
                 {
@@ -690,139 +752,148 @@ namespace WpfTestCase
                     string timeNo = reqData.TimeNo;
 
 
-                    if (reqData.DataItems.Any()) continue;
-                    foreach (var dataItems in reqData.DataItems)
+                    if (reqData.DataItems.Any())
                     {
-                        string artNo = dataItems.ArtNo;
-                        //200000--->Normal
-                        //7002072--->Sameday
-                        //7002131-- > Nextday
-                        if (!new[] { "200000", "7002072", "7002131" }.Contains(artNo)) continue;
-                        List<TimeGroupItem> timeGroupItem = new List<TimeGroupItem>();
-                        List<ResponseReserveDataItem> aBoxResp = new List<ResponseReserveDataItem>();
-
-                        if (aResp.InquiryRs?.ReserveDataItems != null)
-                            aBoxResp.AddRange(aResp.InquiryRs.ReserveDataItems);
-                        if (aResp.InquirySameDayRs.ReserveDataItems != null)
-                            aBoxResp.AddRange(aResp.InquirySameDayRs.ReserveDataItems);
-                        if (aResp.InquiryNextDayRs.ReserveDataItems != null)
-                            aBoxResp.AddRange(aResp.InquiryNextDayRs.ReserveDataItems);
-
-                        List<ResponseReserveDataItem> cBoxResp = new List<ResponseReserveDataItem>();
-                        if (cResp.InquiryRs?.ReserveDataItems != null)
-                            cBoxResp.AddRange(cResp.InquiryRs.ReserveDataItems);
-                        if (cResp.InquirySameDayRs.ReserveDataItems != null)
-                            cBoxResp.AddRange(cResp.InquirySameDayRs.ReserveDataItems);
-                        if (cResp.InquiryNextDayRs.ReserveDataItems != null)
-                            cBoxResp.AddRange(cResp.InquiryNextDayRs.ReserveDataItems);
-
-                        bool aBoxRes = false;
-                        bool cBoxRes = false;
-
-                        #region aBoxResp
-                        if (aBoxResp.Any())
+                        foreach (var dataItems in reqData.DataItems)
                         {
-                            //check ArtNo Time
-                            bool foundArtNo = false;
-                            bool foundTime = false;
-                            foundArtNo = aBoxResp.Any(m => m.DataItems.Any(q => q.ArtNo == artNo));
-
-                            if (foundArtNo)
+                            string artNo = dataItems.ArtNo;
+                            //200000--->Normal
+                            //7002072--->Sameday
+                            //7002131-- > Nextday
+                            if (!new[] { "200000", "7002072", "7002131" }.Contains(artNo))
                             {
-                                if (qStyle == "N")
-                                {
+                                List<TimeGroupItem> timeGroupItem = new List<TimeGroupItem>();
+                                List<ResponseReserveDataItem> aBoxResp = new List<ResponseReserveDataItem>();
 
-                                    foundTime = aBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
-                                                                                               && q.TimeGrpQty > 0
-                                                                                               && q.TimeGrpNo == timeNo));
-                                    if (!foundTime)
+                                if (aResp.InquiryRs?.ReserveDataItems != null)
+                                    aBoxResp.AddRange(aResp.InquiryRs.ReserveDataItems);
+                                if (aResp.InquirySameDayRs.ReserveDataItems != null)
+                                    aBoxResp.AddRange(aResp.InquirySameDayRs.ReserveDataItems);
+                                if (aResp.InquiryNextDayRs.ReserveDataItems != null)
+                                    aBoxResp.AddRange(aResp.InquiryNextDayRs.ReserveDataItems);
+
+                                List<ResponseReserveDataItem> cBoxResp = new List<ResponseReserveDataItem>();
+                                if (cResp.InquiryRs?.ReserveDataItems != null)
+                                    cBoxResp.AddRange(cResp.InquiryRs.ReserveDataItems);
+                                if (cResp.InquirySameDayRs.ReserveDataItems != null)
+                                    cBoxResp.AddRange(cResp.InquirySameDayRs.ReserveDataItems);
+                                if (cResp.InquiryNextDayRs.ReserveDataItems != null)
+                                    cBoxResp.AddRange(cResp.InquiryNextDayRs.ReserveDataItems);
+
+                                bool aBoxRes = false;
+                                bool cBoxRes = false;
+
+                                #region aBoxResp
+                                if (aBoxResp.Any())
+                                {
+                                    //check ArtNo Time
+                                    bool foundArtNo = false;
+                                    bool foundTime = false;
+                                    foundArtNo = aBoxResp.Any(m => m.DataItems.Any(q => q.ArtNo == artNo));
+
+                                    if (foundArtNo)
                                     {
-                                        foundTime = aBoxResp.Any(m => m.ReadyReserve.Befores.Any(q => q.Date == deliveryDate
-                                                                                                   && q.Qty > 0
-                                                                                                   && q.TimeNo == timeNo));
+                                        if (qStyle == "N")
+                                        {
+
+                                            foundTime = aBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
+                                                                                                       && q.TimeGrpQty > 0
+                                                                                                       && q.TimeGrpNo == timeNo));
+                                            if (!foundTime)
+                                            {
+                                                foundTime = aBoxResp.Any(m => m.ReadyReserve.Befores.Any(q => q.Date == deliveryDate
+                                                                                                           && q.Qty > 0
+                                                                                                           && q.TimeNo == timeNo));
+                                            }
+
+                                            if (!foundTime)
+                                            {
+                                                foundTime = aBoxResp.Any(m => m.ReadyReserve.Afters.Any(q => q.Date == deliveryDate
+                                                                                                       && q.Qty > 0
+                                                                                                       && q.TimeNo == timeNo));
+                                            }
+
+                                        }
+                                        else if (qStyle == "S" || qStyle == "X")
+                                        {
+                                            foundTime = aBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
+                                                                                                       && q.TimeGrpQty > 0
+                                                                                                       && q.TimeGrpNo == timeNo));
+                                        }
+
                                     }
 
-                                    if (!foundTime)
+                                    if (foundArtNo && foundTime)
                                     {
-                                        foundTime = aBoxResp.Any(m => m.ReadyReserve.Afters.Any(q => q.Date == deliveryDate
-                                                                                               && q.Qty > 0
-                                                                                               && q.TimeNo == timeNo));
+                                        aBoxRes = true;
+                                    }
+                                }
+                                #endregion
+
+                                #region cBoxResp
+                                if (cBoxResp.Any())
+                                {
+                                    //check ArtNo Time
+                                    bool foundArtNo = false;
+                                    bool foundTime = false;
+                                    foundArtNo = cBoxResp.Any(m => m.DataItems.Any(q => q.ArtNo == artNo));
+
+                                    if (foundArtNo)
+                                    {
+                                        if (qStyle == "N")
+                                        {
+
+                                            foundTime = cBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
+                                                                                                       && q.TimeGrpQty == 0
+                                                                                                       && q.TimeGrpNo == timeNo));
+                                            if (!foundTime)
+                                            {
+                                                //foundTime = cBoxResp.Any(m => m.ReadyReserve.Befores.Any(q => q.Date == deliveryDate
+                                                //                                                           && q.Qty == 0
+                                                //                                                           && q.TimeNo == timeNo));
+
+                                                foundTime = cBoxResp.Any(m =>
+                                                                                m.ReadyReserve != null &&
+                                                                                m.ReadyReserve.Befores != null &&
+                                                                                m.ReadyReserve.Befores.Any(q =>
+                                                                                    q.Date == deliveryDate &&
+                                                                                    q.Qty == 0 &&
+                                                                                    q.TimeNo == timeNo));
+                                            }
+
+                                            if (!foundTime)
+                                            {
+                                                foundTime = cBoxResp.Any(m => m.ReadyReserve.Afters.Any(q => q.Date == deliveryDate
+                                                                                                       && q.Qty == 0
+                                                                                                       && q.TimeNo == timeNo));
+                                            }
+
+                                        }
+                                        else if (qStyle == "S" || qStyle == "X")
+                                        {
+                                            foundTime = cBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
+                                                                                                       && q.TimeGrpQty == 0
+                                                                                                       && q.TimeGrpNo == timeNo));
+                                        }
+
                                     }
 
+                                    if (foundArtNo && foundTime)
+                                    {
+                                        cBoxRes = true;
+                                    }
                                 }
-                                else if (qStyle == "S" || qStyle == "X")
+                                #endregion
+
+                                if (aBoxRes && cBoxRes)
                                 {
-                                    foundTime = aBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
-                                                                                               && q.TimeGrpQty == 0
-                                                                                               && q.TimeGrpNo == timeNo));
+                                    caseType.StatusCase = true;
+                                    caseType.CaseTypeReviews = "Capa ds  เป็น 0 ระหว่างจองคิว";
+                                    return await Task.FromResult(caseType);
                                 }
-
-                            }
-
-                            if (foundArtNo && foundTime)
-                            {
-                                aBoxRes = true;
                             }
                         }
-                        #endregion
-
-                        #region cBoxResp
-                        if (cBoxResp.Any())
-                        {
-                            //check ArtNo Time
-                            bool foundArtNo = false;
-                            bool foundTime = false;
-                            foundArtNo = cBoxResp.Any(m => m.DataItems.Any(q => q.ArtNo == artNo));
-
-                            if (foundArtNo)
-                            {
-                                if (qStyle == "N")
-                                {
-
-                                    foundTime = cBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
-                                                                                               && q.TimeGrpQty == 0
-                                                                                               && q.TimeGrpNo == timeNo));
-                                    if (!foundTime)
-                                    {
-                                        foundTime = cBoxResp.Any(m => m.ReadyReserve.Befores.Any(q => q.Date == deliveryDate
-                                                                                                   && q.Qty == 0
-                                                                                                   && q.TimeNo == timeNo));
-                                    }
-
-                                    if (!foundTime)
-                                    {
-                                        foundTime = cBoxResp.Any(m => m.ReadyReserve.Afters.Any(q => q.Date == deliveryDate
-                                                                                               && q.Qty == 0
-                                                                                               && q.TimeNo == timeNo));
-                                    }
-
-                                }
-                                else if (qStyle == "S" || qStyle == "X")
-                                {
-                                    foundTime = cBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
-                                                                                               && q.TimeGrpQty == 0
-                                                                                               && q.TimeGrpNo == timeNo));
-                                }
-
-                            }
-
-                            if (foundArtNo && foundTime)
-                            {
-                                cBoxRes = true;
-                            }
-                        }
-                        #endregion
-
-                        if (aBoxRes && cBoxRes)
-                        {
-                            caseType.StatusCase = true;
-                            caseType.CaseTypeReviews = "Capa ds  เป็น 0 ระหว่างจองคิว";
-                            return await Task.FromResult(caseType);
-                        }
-
                     }
-
-
                 }
             }
             catch { }
@@ -830,6 +901,7 @@ namespace WpfTestCase
         }
 
         //6. Capa ds  มี Stock  มี จองคิวไม่ได้
+        //ข้อ 6 Capa มี Stock มี จองคิวไม่ได้//O5956814//O5940226//O5939229
         public async Task<CaseType> QueueBlockedDespiteStockCapaDS(JsonDSRequest bReq, JsonDSResponse aResp, JsonDSResponse cResp)
         {
             CaseType caseType = new CaseType();
@@ -837,7 +909,7 @@ namespace WpfTestCase
             {
                 var bBoxReq = new List<ReserveDataItems>();
                 if (bReq.ReserveDataItems != null)
-                    bBoxReq.AddRange(bBoxReq);
+                    bBoxReq.AddRange(bReq.ReserveDataItems);
 
                 foreach (var reqData in bBoxReq)
                 {
@@ -848,136 +920,139 @@ namespace WpfTestCase
                     string timeNo = reqData.TimeNo;
 
 
-                    if (reqData.DataItems.Any()) continue;
-                    foreach (var dataItems in reqData.DataItems)
+                    if (reqData.DataItems.Any())
                     {
-                        string artNo = dataItems.ArtNo;
-                        //200000--->Normal
-                        //7002072--->Sameday
-                        //7002131-- > Nextday
-                        if (!new[] { "200000", "7002072", "7002131" }.Contains(artNo)) continue;
-                        List<TimeGroupItem> timeGroupItem = new List<TimeGroupItem>();
-                        List<ResponseReserveDataItem> aBoxResp = new List<ResponseReserveDataItem>();
-
-                        if (aResp.InquiryRs?.ReserveDataItems != null)
-                            aBoxResp.AddRange(aResp.InquiryRs.ReserveDataItems);
-                        if (aResp.InquirySameDayRs.ReserveDataItems != null)
-                            aBoxResp.AddRange(aResp.InquirySameDayRs.ReserveDataItems);
-                        if (aResp.InquiryNextDayRs.ReserveDataItems != null)
-                            aBoxResp.AddRange(aResp.InquiryNextDayRs.ReserveDataItems);
-
-                        List<ResponseReserveDataItem> cBoxResp = new List<ResponseReserveDataItem>();
-                        if (cResp.InquiryRs?.ReserveDataItems != null)
-                            cBoxResp.AddRange(cResp.InquiryRs.ReserveDataItems);
-                        if (cResp.InquirySameDayRs.ReserveDataItems != null)
-                            cBoxResp.AddRange(cResp.InquirySameDayRs.ReserveDataItems);
-                        if (cResp.InquiryNextDayRs.ReserveDataItems != null)
-                            cBoxResp.AddRange(cResp.InquiryNextDayRs.ReserveDataItems);
-
-                        bool aBoxRes = false;
-                        bool cBoxRes = false;
-
-                        #region aBoxResp
-                        if (aBoxResp.Any())
+                        foreach (var dataItems in reqData.DataItems)
                         {
-                            //check ArtNo Time
-                            bool foundArtNo = false;
-                            bool foundTime = false;
-                            foundArtNo = aBoxResp.Any(m => m.DataItems.Any(q => q.ArtNo == artNo));
-
-                            if (foundArtNo)
+                            string artNo = dataItems.ArtNo;
+                            //200000--->Normal
+                            //7002072--->Sameday
+                            //7002131-- > Nextday
+                            if (!new[] { "200000", "7002072", "7002131" }.Contains(artNo))
                             {
-                                if (qStyle == "N")
-                                {
+                                List<TimeGroupItem> timeGroupItem = new List<TimeGroupItem>();
+                                List<ResponseReserveDataItem> aBoxResp = new List<ResponseReserveDataItem>();
 
-                                    foundTime = aBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
-                                                                                               && q.TimeGrpQty > 0
-                                                                                               && q.TimeGrpNo == timeNo));
-                                    if (!foundTime)
+                                if (aResp.InquiryRs?.ReserveDataItems != null)
+                                    aBoxResp.AddRange(aResp.InquiryRs.ReserveDataItems);
+                                if (aResp.InquirySameDayRs.ReserveDataItems != null)
+                                    aBoxResp.AddRange(aResp.InquirySameDayRs.ReserveDataItems);
+                                if (aResp.InquiryNextDayRs.ReserveDataItems != null)
+                                    aBoxResp.AddRange(aResp.InquiryNextDayRs.ReserveDataItems);
+
+                                List<ResponseReserveDataItem> cBoxResp = new List<ResponseReserveDataItem>();
+                                if (cResp.InquiryRs?.ReserveDataItems != null)
+                                    cBoxResp.AddRange(cResp.InquiryRs.ReserveDataItems);
+                                if (cResp.InquirySameDayRs.ReserveDataItems != null)
+                                    cBoxResp.AddRange(cResp.InquirySameDayRs.ReserveDataItems);
+                                if (cResp.InquiryNextDayRs.ReserveDataItems != null)
+                                    cBoxResp.AddRange(cResp.InquiryNextDayRs.ReserveDataItems);
+
+                                bool aBoxRes = false;
+                                bool cBoxRes = false;
+
+                                #region aBoxResp
+                                if (aBoxResp.Any())
+                                {
+                                    //check ArtNo Time
+                                    bool foundArtNo = false;
+                                    bool foundTime = false;
+                                    foundArtNo = aBoxResp.Any(m => m.DataItems.Any(q => q.ArtNo == artNo));
+
+                                    if (foundArtNo)
                                     {
-                                        foundTime = aBoxResp.Any(m => m.ReadyReserve.Befores.Any(q => q.Date == deliveryDate
-                                                                                                   && q.Qty > 0
-                                                                                                   && q.TimeNo == timeNo));
+                                        if (qStyle == "N")
+                                        {
+
+                                            foundTime = aBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
+                                                                                                       && q.TimeGrpQty > 0
+                                                                                                       && q.TimeGrpNo == timeNo));
+                                            if (!foundTime)
+                                            {
+                                                foundTime = aBoxResp.Any(m => m.ReadyReserve.Befores.Any(q => q.Date == deliveryDate
+                                                                                                           && q.Qty > 0
+                                                                                                           && q.TimeNo == timeNo));
+                                            }
+
+                                            if (!foundTime)
+                                            {
+                                                foundTime = aBoxResp.Any(m => m.ReadyReserve.Afters.Any(q => q.Date == deliveryDate
+                                                                                                       && q.Qty > 0
+                                                                                                       && q.TimeNo == timeNo));
+                                            }
+
+                                        }
+                                        else if (qStyle == "S" || qStyle == "X")
+                                        {
+                                            foundTime = aBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
+                                                                                                       && q.TimeGrpQty > 0
+                                                                                                       && q.TimeGrpNo == timeNo));
+                                        }
+
                                     }
 
-                                    if (!foundTime)
+                                    if (foundArtNo && foundTime)
                                     {
-                                        foundTime = aBoxResp.Any(m => m.ReadyReserve.Afters.Any(q => q.Date == deliveryDate
-                                                                                               && q.Qty > 0
-                                                                                               && q.TimeNo == timeNo));
+                                        aBoxRes = true;
+                                    }
+                                }
+                                #endregion
+
+                                #region cBoxResp
+                                if (cBoxResp.Any())
+                                {
+                                    //check ArtNo Time
+                                    bool foundArtNo = false;
+                                    bool foundTime = false;
+                                    foundArtNo = cBoxResp.Any(m => m.DataItems.Any(q => q.ArtNo == artNo));
+
+                                    if (foundArtNo)
+                                    {
+                                        if (qStyle == "N")
+                                        {
+
+                                            foundTime = cBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
+                                                                                                       && q.TimeGrpQty > 0
+                                                                                                       && q.TimeGrpNo == timeNo));
+                                            if (!foundTime)
+                                            {
+                                                foundTime = cBoxResp.Any(m => m.ReadyReserve.Befores.Any(q => q.Date == deliveryDate
+                                                                                                           && q.Qty > 0
+                                                                                                           && q.TimeNo == timeNo));
+                                            }
+
+                                            if (!foundTime)
+                                            {
+                                                foundTime = cBoxResp.Any(m => m.ReadyReserve.Afters.Any(q => q.Date == deliveryDate
+                                                                                                       && q.Qty > 0
+                                                                                                       && q.TimeNo == timeNo));
+                                            }
+
+                                        }
+                                        else if (qStyle == "S" || qStyle == "X")
+                                        {
+                                            foundTime = cBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
+                                                                                                       && q.TimeGrpQty > 0
+                                                                                                       && q.TimeGrpNo == timeNo));
+                                        }
+
                                     }
 
+                                    if (foundArtNo && foundTime)
+                                    {
+                                        cBoxRes = true;
+                                    }
                                 }
-                                else if (qStyle == "S" || qStyle == "X")
+                                #endregion
+
+                                if (aBoxRes && cBoxRes)
                                 {
-                                    foundTime = aBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
-                                                                                               && q.TimeGrpQty > 0
-                                                                                               && q.TimeGrpNo == timeNo));
+                                    caseType.StatusCase = true;
+                                    caseType.CaseTypeReviews = "Capa ds  มี Stock  มี จองคิวไม่ได้";
+                                    return await Task.FromResult(caseType);
                                 }
-
-                            }
-
-                            if (foundArtNo && foundTime)
-                            {
-                                aBoxRes = true;
                             }
                         }
-                        #endregion
-
-                        #region cBoxResp
-                        if (cBoxResp.Any())
-                        {
-                            //check ArtNo Time
-                            bool foundArtNo = false;
-                            bool foundTime = false;
-                            foundArtNo = cBoxResp.Any(m => m.DataItems.Any(q => q.ArtNo == artNo));
-
-                            if (foundArtNo)
-                            {
-                                if (qStyle == "N")
-                                {
-
-                                    foundTime = cBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
-                                                                                               && q.TimeGrpQty > 0
-                                                                                               && q.TimeGrpNo == timeNo));
-                                    if (!foundTime)
-                                    {
-                                        foundTime = cBoxResp.Any(m => m.ReadyReserve.Befores.Any(q => q.Date == deliveryDate
-                                                                                                   && q.Qty > 0
-                                                                                                   && q.TimeNo == timeNo));
-                                    }
-
-                                    if (!foundTime)
-                                    {
-                                        foundTime = cBoxResp.Any(m => m.ReadyReserve.Afters.Any(q => q.Date == deliveryDate
-                                                                                               && q.Qty > 0
-                                                                                               && q.TimeNo == timeNo));
-                                    }
-
-                                }
-                                else if (qStyle == "S" || qStyle == "X")
-                                {
-                                    foundTime = cBoxResp.Any(m => m.ReadyReserveTimeGrp.Any(q => q.TimeGrpNo == deliveryDate
-                                                                                               && q.TimeGrpQty > 0
-                                                                                               && q.TimeGrpNo == timeNo));
-                                }
-
-                            }
-
-                            if (foundArtNo && foundTime)
-                            {
-                                cBoxRes = true;
-                            }
-                        }
-                        #endregion
-
-                        if (aBoxRes && cBoxRes)
-                        {
-                            caseType.StatusCase = true;
-                            caseType.CaseTypeReviews = "Capa ds  มี Stock  มี จองคิวไม่ได้";
-                            return await Task.FromResult(caseType);
-                        }
-
                     }
                 }
             }

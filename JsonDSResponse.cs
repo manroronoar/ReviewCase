@@ -108,8 +108,8 @@ namespace WpfTestCase
 
     public class ReadyReserve
     {
-        public List<ReadyReserveItem> Befores { get; set; }
-        public List<ReadyReserveItem> Afters { get; set; }
+        public List<ReadyReserveItem> Befores { get; set; } = new List<ReadyReserveItem>();
+        public List<ReadyReserveItem> Afters { get; set; } = new List<ReadyReserveItem>();
     }
 
     public class ReadyReserveItem
