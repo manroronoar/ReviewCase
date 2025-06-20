@@ -30,6 +30,8 @@ namespace WpfTestCase
         public string CaseIrNo { get; set; } = string.Empty;
         public string User { get; set; } = string.Empty;
         public string CaseReviews { get; set; } = string.Empty;
+        public bool StatusCase { get; set; } = false;
+        public int StatusCode { get; set; }
     }
     public class TbEvents
     {

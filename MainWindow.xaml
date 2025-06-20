@@ -44,18 +44,59 @@
                 <DataGridTextColumn Header="MM" Binding="{Binding MM}" Width="auto"/>
                 <DataGridTextColumn Header="TRNDATE" Binding="{Binding TransactionDate}" Width="auto"/>
                 <DataGridTextColumn Header="ORDERID" Binding="{Binding OrderId}" Width="auto"/>
-                <DataGridTextColumn Header="TICKETNO" Binding="{Binding TicketNo}" Width="auto"/>
+                <!-- <DataGridTextColumn Header="TICKETNO" Binding="{Binding TicketNo}" Width="auto"/>
                 <DataGridTextColumn Header="SAMEDAY" Binding="{Binding IsSameDay}" Width="auto"/>
                 <DataGridTextColumn Header="DELIVERY" Binding="{Binding Delivery}" Width="auto"/>
                 <DataGridTextColumn Header="STATUS" Binding="{Binding Status}" Width="auto"/>
                 <DataGridTextColumn Header="Order Error" Binding="{Binding OrderError}" Width="auto"/>
-                <DataGridTextColumn Header="POS" Binding="{Binding Pos}" Width="auto"/>
+                <DataGridTextColumn Header="POS" Binding="{Binding Pos}" Width="auto"/>-->
                 <DataGridTextColumn Header="Root Cause" Binding="{Binding RootCause}" Width="auto"/>
+                <DataGridTemplateColumn Header="Case Reviews" SortMemberPath="CaseReviews" Width="auto">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding CaseReviews}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <!-- StatusCode == 1 → เขียว -->
+                                            <DataTrigger Binding="{Binding StatusCode}" Value="1">
+                                                <Setter Property="Background" Value="Green"/>
+                                            </DataTrigger>
+                                            <!-- StatusCode == 2 → เขียว -->
+                                            <DataTrigger Binding="{Binding StatusCode}" Value="2">
+                                                <Setter Property="Background" Value="Green"/>
+                                            </DataTrigger>
+                                            <!-- StatusCode == 3 → เขียว -->
+                                            <DataTrigger Binding="{Binding StatusCode}" Value="3">
+                                                <Setter Property="Background" Value="Green"/>
+                                            </DataTrigger>
+                                            <!-- StatusCode == 4 → เขียว -->
+                                            <DataTrigger Binding="{Binding StatusCode}" Value="4">
+                                                <Setter Property="Background" Value="Green"/>
+                                            </DataTrigger>
+                                            <!-- StatusCode == 5 → เขียว -->
+                                            <DataTrigger Binding="{Binding StatusCode}" Value="5">
+                                                <Setter Property="Background" Value="Green"/>
+                                            </DataTrigger>
+                                            <!-- StatusCode == 6 → เขียว -->
+                                            <DataTrigger Binding="{Binding StatusCode}" Value="6">
+                                                <Setter Property="Background" Value="Green"/>
+                                            </DataTrigger>
+                                            <!-- StatusCode == 99 → Yellow -->
+                                            <DataTrigger Binding="{Binding StatusCode}" Value="99">
+                                                <Setter Property="Background" Value="Yellow "/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
                 <DataGridTextColumn Header="ERROR" Binding="{Binding Error}" Width="auto"/>
                 <DataGridTextColumn Header="JOB" Binding="{Binding Job}" Width="80"/>
                 <DataGridTextColumn Header="Case IR No" Binding="{Binding CaseIrNo}" Width="100"/>
                 <DataGridTextColumn Header="USER" Binding="{Binding User}" Width="auto"/>
-                <DataGridTextColumn Header="Case Reviews" Binding="{Binding CaseReviews}" Width="auto"/>
             </DataGrid.Columns>
         </DataGrid>
     </Grid>
