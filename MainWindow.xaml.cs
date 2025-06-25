@@ -375,8 +375,102 @@ namespace WpfTestCase
                     pattern.boxD = 1;
                     pattern.boxE = 0;
                 }
-
-
+                //Pattern seq 5 todo
+                else if (e[0].Type == "ORDER"
+                    && e[1].Type == "ORDER"
+                    && e[2].Type == "QUEUE"
+                    && e[3].Type == "QUEUE"
+                    && e[4].Type == "QUEUE"
+                    && e[5].Type == "QUEUE"
+                    && e[6].Type == "QUEUE"
+                     && e[7].Type == "CUSTOMER"
+                    && e[8].Type == "QUEUE")
+                {
+                    pattern.SeqPattern = 5;
+                    pattern.SeqCount = 9;
+                    pattern.boxA = 8;
+                    pattern.boxB = 6;
+                    pattern.boxC = 5;
+                    pattern.boxD = 1;
+                    pattern.boxE = 0;
+                }
+                //Pattern seq 6 todo
+                else if (e[0].Type == "ORDER"
+                    && e[1].Type == "QUEUE"
+                    && e[2].Type == "QUEUE"
+                    && e[3].Type == "QUEUE"
+                    && e[4].Type == "QUEUE"
+                    && e[5].Type == "QUEUE"
+                    && e[6].Type == "QUEUE"
+                    && e[7].Type == "QUEUE"
+                    && e[8].Type == "CUSTOMER"
+                    && e[9].Type == "QUEUE")
+                {
+                    pattern.SeqPattern = 6;
+                    pattern.SeqCount = 10;
+                    pattern.boxA = 9;
+                    pattern.boxB = 7;
+                    pattern.boxC = 6;
+                    pattern.boxD = 1;
+                    pattern.boxE = 0;
+                }
+                //Pattern seq 7 todo
+                else if (e[0].Type == "ORDER"
+                    && e[1].Type == "QUEUE"
+                    && e[2].Type == "QUEUE"
+                    && e[3].Type == "QUEUE"
+                    && e[4].Type == "QUEUE"
+                    && e[5].Type == "CUSTOMER"
+                    && e[6].Type == "QUEUE")
+                {
+                    pattern.SeqPattern = 7;
+                    pattern.SeqCount = 7;
+                    pattern.boxA = 6;
+                    pattern.boxB = 4;
+                    pattern.boxC = 3;
+                    pattern.boxD = 2;
+                    pattern.boxE = 1;
+                }
+                //Pattern seq 8 todo
+                else if (e[0].Type == "ORDER"
+                    && e[1].Type == "ORDER"
+                    && e[2].Type == "QUEUE"
+                    && e[3].Type == "QUEUE"
+                    && e[4].Type == "QUEUE"
+                    && e[5].Type == "QUEUE"
+                    && e[6].Type == "QUEUE"
+                    && e[7].Type == "CUSTOMER"
+                    && e[8].Type == "CUSTOMER"
+                    && e[9].Type == "QUEUE")
+                {
+                    pattern.SeqPattern = 8;
+                    pattern.SeqCount = 10;
+                    pattern.boxA = 9;
+                    pattern.boxB = 6;
+                    pattern.boxC = 5;
+                    pattern.boxD = 2;
+                    pattern.boxE = 1;
+                }
+                //Pattern seq 9 todo
+                else if (e[0].Type == "ORDER"
+                    && e[1].Type == "ORDER"
+                    && e[2].Type == "QUEUE"
+                    && e[3].Type == "QUEUE"
+                    && e[4].Type == "QUEUE"
+                    && e[5].Type == "QUEUE"
+                    && e[6].Type == "QUEUE"
+                    && e[7].Type == "CUSTOMER"
+                    && e[8].Type == "CUSTOMER"
+                    && e[9].Type == "QUEUE")
+                {
+                    pattern.SeqPattern = 8;
+                    pattern.SeqCount = 10;
+                    pattern.boxA = 9;
+                    pattern.boxB = 6;
+                    pattern.boxC = 5;
+                    pattern.boxD = 2;
+                    pattern.boxE = 1;
+                }
 
                 int i = 0;
                 int seqCount = pattern.SeqCount;
@@ -1178,7 +1272,10 @@ namespace WpfTestCase
             return await Task.FromResult(caseType);
         }
 
-      
+        private void Txt01_TextChanged(object sender, TextChangedEventArgs e)
+        {
+
+        }
     }
 
 }

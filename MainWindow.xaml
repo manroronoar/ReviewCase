@@ -39,9 +39,9 @@
                   CanUserAddRows="False"
                   SelectionMode="Single" Margin="10,0,10,8">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Run No" Binding="{Binding RunNo}" Width="auto"/>
-                <!--<DataGridTextColumn Header="ORDERID" Binding="{Binding OrderId}" Width="auto"/>
-                <DataGridTextColumn Header="No." Binding="{Binding Number}" Width="auto"/>
+                <!--<DataGridTextColumn Header="Run No" Binding="{Binding RunNo}" Width="auto"/>-->
+                <DataGridTextColumn Header="ORDERID" Binding="{Binding OrderId}" Width="auto"/>
+                <!--<DataGridTextColumn Header="No." Binding="{Binding Number}" Width="auto"/>
                 <DataGridTextColumn Header="MM" Binding="{Binding MM}" Width="auto"/>
                 <DataGridTextColumn Header="TRNDATE" Binding="{Binding TransactionDate}" Width="auto"/>
                 <DataGridTextColumn Header="TICKETNO" Binding="{Binding TicketNo}" Width="auto"/>
@@ -80,6 +80,10 @@
                                             </DataTrigger>
                                             <!-- StatusCode == 6 → เขียว -->
                                             <DataTrigger Binding="{Binding StatusCode}" Value="6">
+                                                <Setter Property="Background" Value="Green"/>
+                                            </DataTrigger>
+                                            <!-- StatusCode == 7 → เขียว -->
+                                            <DataTrigger Binding="{Binding StatusCode}" Value="7">
                                                 <Setter Property="Background" Value="Green"/>
                                             </DataTrigger>
                                             <!-- StatusCode == 99 → Yellow -->
