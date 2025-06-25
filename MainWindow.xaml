@@ -21,7 +21,7 @@
             <TextBox x:Name="FilePathTextBox" Width="274" Height="26" RenderTransformOrigin="0.452,0.241" Margin="0,0,20,0" IsReadOnly="True" IsUndoEnabled="False"/>
             <Button x:Name="BrowseButton" Content="Browse..." Click="BrowseButton_Click" Width="80" Height="27"/>
             <Border Width="25" />
-            <TextBox x:Name="Txt01" Width="152" Height="26" RenderTransformOrigin="0.452,0.241"  IsUndoEnabled="False" Margin="0,0,20,0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto"/>
+            <TextBox x:Name="Txt01" Width="152" Height="26" RenderTransformOrigin="0.5,0.5"  IsUndoEnabled="False" Margin="0,0,20,0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" TextChanged="Txt01_TextChanged"/>
             <Button x:Name="Button01" Content="Search"  Width="94" Height="27" Click="Button01_Click"/>
             <Border Width="20" />
             <Button x:Name="ClearButton" Content="Clear" Width="74" Height="27" Click="ClearButton_Click" />
@@ -37,20 +37,20 @@
         <DataGrid x:Name="DgLoadExcel" Grid.Row="2" 
                   AutoGenerateColumns="False"
                   CanUserAddRows="False"
-                  SelectionMode="Single" Margin="0,0,0,8">
+                  SelectionMode="Single" Margin="10,0,10,8">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Run No" Binding="{Binding RunNo}" Width="auto"/>
+                <!--<DataGridTextColumn Header="ORDERID" Binding="{Binding OrderId}" Width="auto"/>
                 <DataGridTextColumn Header="No." Binding="{Binding Number}" Width="auto"/>
                 <DataGridTextColumn Header="MM" Binding="{Binding MM}" Width="auto"/>
                 <DataGridTextColumn Header="TRNDATE" Binding="{Binding TransactionDate}" Width="auto"/>
-                <DataGridTextColumn Header="ORDERID" Binding="{Binding OrderId}" Width="auto"/>
-                <!-- <DataGridTextColumn Header="TICKETNO" Binding="{Binding TicketNo}" Width="auto"/>
+                <DataGridTextColumn Header="TICKETNO" Binding="{Binding TicketNo}" Width="auto"/>
                 <DataGridTextColumn Header="SAMEDAY" Binding="{Binding IsSameDay}" Width="auto"/>
                 <DataGridTextColumn Header="DELIVERY" Binding="{Binding Delivery}" Width="auto"/>
                 <DataGridTextColumn Header="STATUS" Binding="{Binding Status}" Width="auto"/>
                 <DataGridTextColumn Header="Order Error" Binding="{Binding OrderError}" Width="auto"/>
-                <DataGridTextColumn Header="POS" Binding="{Binding Pos}" Width="auto"/>-->
-                <DataGridTextColumn Header="Root Cause" Binding="{Binding RootCause}" Width="auto"/>
+                <DataGridTextColumn Header="POS" Binding="{Binding Pos}" Width="auto"/>
+                <DataGridTextColumn Header="Root Cause" Binding="{Binding RootCause}" Width="auto"/>-->
                 <DataGridTemplateColumn Header="Case Reviews" SortMemberPath="CaseReviews" Width="auto">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
@@ -94,9 +94,9 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
                 <DataGridTextColumn Header="ERROR" Binding="{Binding Error}" Width="auto"/>
-                <DataGridTextColumn Header="JOB" Binding="{Binding Job}" Width="80"/>
+                <!--<DataGridTextColumn Header="JOB" Binding="{Binding Job}" Width="80"/>
                 <DataGridTextColumn Header="Case IR No" Binding="{Binding CaseIrNo}" Width="100"/>
-                <DataGridTextColumn Header="USER" Binding="{Binding User}" Width="auto"/>
+                <DataGridTextColumn Header="USER" Binding="{Binding User}" Width="auto"/>-->
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

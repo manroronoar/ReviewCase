@@ -450,20 +450,25 @@ namespace WpfTestCase
                                 if (!caseType.StatusCase)
                                 {
                                     caseType = await WebStockLogicError(bReq, aResp);
-                                    e.CaseReviews = caseType.CaseTypeReviews;
-                                    e.StatusCase = true;
-                                    e.StatusCode = 2;
+                                    if (caseType.StatusCase)
+                                    {
+                                        e.CaseReviews = caseType.CaseTypeReviews;
+                                        e.StatusCase = true;
+                                        e.StatusCode = 2;
+                                    }
                                 }
                                 #endregion
 
                                 #region 3. Stock ds หมดระหว่างจองคิว
                                 if (!caseType.StatusCase)
                                 {
-                                   
                                     caseType = await StockDSOutDuringQueue(bReq, aResp, cResp);
-                                    e.CaseReviews = caseType.CaseTypeReviews;
-                                    e.StatusCase = true;
-                                    e.StatusCode = 3;
+                                    if (caseType.StatusCase)
+                                    {
+                                        e.CaseReviews = caseType.CaseTypeReviews;
+                                        e.StatusCase = true;
+                                        e.StatusCode = 3;
+                                    }
                                 }
                                 #endregion
 
@@ -471,9 +476,12 @@ namespace WpfTestCase
                                 if (!caseType.StatusCase)
                                 {
                                     caseType = await WebPurchaseAllowedZeroCapa(bReq, aResp);
-                                    e.CaseReviews = caseType.CaseTypeReviews;
-                                    e.StatusCase = true;
-                                    e.StatusCode = 4;
+                                    if (caseType.StatusCase)
+                                    {
+                                        e.CaseReviews = caseType.CaseTypeReviews;
+                                        e.StatusCase = true;
+                                        e.StatusCode = 4;
+                                    }
                                 }
                                 #endregion
 
@@ -481,9 +489,12 @@ namespace WpfTestCase
                                 if (!caseType.StatusCase)
                                 {
                                     caseType = await QueueBlockedZeroCapaDS(bReq, aResp, cResp);
-                                    e.CaseReviews = caseType.CaseTypeReviews;
-                                    e.StatusCase = true;
-                                    e.StatusCode = 5;
+                                    if (caseType.StatusCase)
+                                    {
+                                        e.CaseReviews = caseType.CaseTypeReviews;
+                                        e.StatusCase = true;
+                                        e.StatusCode = 5;
+                                    }
                                 }
                                 #endregion
 
@@ -491,9 +502,12 @@ namespace WpfTestCase
                                 if (!caseType.StatusCase)
                                 {
                                     caseType = await QueueBlockedDespiteStockCapaDS(bReq, aResp, cResp);
-                                    e.CaseReviews = caseType.CaseTypeReviews;
-                                    e.StatusCase = true;
-                                    e.StatusCode = 6;
+                                    if (caseType.StatusCase)
+                                    {
+                                        e.CaseReviews = caseType.CaseTypeReviews;
+                                        e.StatusCase = true;
+                                        e.StatusCode = 6;
+                                    }
                                 }
                                 #endregion
 
@@ -711,6 +725,8 @@ namespace WpfTestCase
 
                             if ((foundInA && foundInC))
                             {
+                                var insufficientItems = new List<string>();
+                               // insufficientItems.Add($"QStyle:{reqGroup.QStyle} ArtNo:{artNo} | Stock:{respStockQty} < Request:{reqQty}");
                                 caseType.StatusCase = true;
                                 caseType.CaseTypeReviews = "Stock ds หมดระหว่างจองคิว";
                                 return await Task.FromResult(caseType);
@@ -807,6 +823,8 @@ namespace WpfTestCase
                             }
                             if (foundArtNo && foundTime)
                             {
+                                var insufficientItems = new List<string>();
+                                // insufficientItems.Add($"QStyle:{reqGroup.QStyle} ArtNo:{artNo} | Stock:{respStockQty} < Request:{reqQty}");
                                 caseType.StatusCase = true;
                                 caseType.CaseTypeReviews = "Capa เป็น 0 หน้า web ปล่อยซื้อได้ ";
                                 return await Task.FromResult(caseType);
@@ -975,6 +993,8 @@ namespace WpfTestCase
 
                                 if (aBoxRes && cBoxRes)
                                 {
+                                    var insufficientItems = new List<string>();
+                                    // insufficientItems.Add($"QStyle:{reqGroup.QStyle} ArtNo:{artNo} | Stock:{respStockQty} < Request:{reqQty}");
                                     caseType.StatusCase = true;
                                     caseType.CaseTypeReviews = "Capa ds เป็น 0 ระหว่างจองคิว";
                                     return await Task.FromResult(caseType);
@@ -1143,6 +1163,8 @@ namespace WpfTestCase
 
                                 if (aBoxRes && cBoxRes)
                                 {
+                                    var insufficientItems = new List<string>();
+                                    // insufficientItems.Add($"QStyle:{reqGroup.QStyle} ArtNo:{artNo} | Stock:{respStockQty} < Request:{reqQty}");
                                     caseType.StatusCase = true;
                                     caseType.CaseTypeReviews = "Capa ds มี Stock มี จองคิวไม่ได้";
                                     return await Task.FromResult(caseType);
@@ -1156,8 +1178,7 @@ namespace WpfTestCase
             return await Task.FromResult(caseType);
         }
 
-
-
+      
     }
 
 }
