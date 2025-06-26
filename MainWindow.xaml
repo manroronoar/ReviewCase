@@ -25,6 +25,13 @@
             <Button x:Name="Button01" Content="Search"  Width="94" Height="27" Click="Button01_Click"/>
             <Border Width="20" />
             <Button x:Name="ClearButton" Content="Clear" Width="74" Height="27" Click="ClearButton_Click" />
+            <Label Content="ToTal" Width="60"/>
+            <Label Content="" Width="60" Name="lblTotal"/>
+            <Label Content="Pass" Width="60"/>
+            <Label Content="" Width="60" Name="lblPass"/>
+            <Label Content="Failed" Width="60"/>
+            <Label Content="" Width="60" Name="lblFailed"/>
+            <Button Content="Export Excel" Click="ExportExcel_Click"/>
         </StackPanel>
 
         <!-- Progress Bar -->
@@ -51,7 +58,7 @@
                 <DataGridTextColumn Header="Order Error" Binding="{Binding OrderError}" Width="auto"/>
                 <DataGridTextColumn Header="POS" Binding="{Binding Pos}" Width="auto"/>
                 <DataGridTextColumn Header="Root Cause" Binding="{Binding RootCause}" Width="auto"/>-->
-                <DataGridTemplateColumn Header="Case Reviews" SortMemberPath="CaseReviews" Width="auto">
+                <DataGridTemplateColumn Header="CASE REVIEWS" SortMemberPath="CaseReviews" Width="auto">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding CaseReviews}">
