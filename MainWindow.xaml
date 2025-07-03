@@ -31,7 +31,7 @@
             <Label Content="" Width="60" Name="lblPass"/>
             <Label Content="Failed" Width="60"/>
             <Label Content="" Width="60" Name="lblFailed"/>
-            <Button Content="Export Excel" Click="ExportExcel_Click" Margin="50,0,0,0" />
+            <Button Content="Export Excel" Click="ExportExcel_Click" Margin="20,0,0,0" />
         </StackPanel>
 
         <!-- Progress Bar -->
@@ -104,6 +104,7 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
+                <DataGridTextColumn Header="ROOT CAUSE" Binding="{Binding RootCause}" Width="auto"/>
                 <DataGridTextColumn Header="ERROR" Binding="{Binding Error}" Width="auto"/>
                 <!--<DataGridTextColumn Header="JOB" Binding="{Binding Job}" Width="80"/>
                 <DataGridTextColumn Header="Case IR No" Binding="{Binding CaseIrNo}" Width="100"/>

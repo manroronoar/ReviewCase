@@ -10,6 +10,7 @@ namespace WpfTestCase
     {
         public string CaseTypeReviews { get; set; } = string.Empty;
         public bool StatusCase { get; set; } = false;
+        public string RootCause { get; set; } = string.Empty;  
     }
     public class Order
     {
@@ -56,15 +57,10 @@ namespace WpfTestCase
         public List<TbEvents> tbEvents ;
         public int SeqPattern { get; set; } = 0;
         public int SeqCount { get; set; } = 0;
-
         public int boxA { get; set; } = 0;
-
         public int boxB { get; set; } = 0;
-
         public int boxC { get; set; } = 0;
-
         public int boxD { get; set; } = 0;
-
         public int boxE { get; set; } = 0;
     }
     public class Event

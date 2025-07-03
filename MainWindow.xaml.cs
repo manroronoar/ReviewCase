@@ -16,6 +16,7 @@ using A = DocumentFormat.OpenXml.Drawing;
 using C = DocumentFormat.OpenXml.Drawing.Charts;
 using X14 = DocumentFormat.OpenXml.Office2010.Excel;
 using DocumentFormat.OpenXml.Drawing.Spreadsheet;
+using DocumentFormat.OpenXml.Office2016.Excel;
 
 
 namespace WpfTestCase
@@ -889,6 +890,7 @@ namespace WpfTestCase
                                             e.CaseReviews = caseType.CaseTypeReviews;
                                             e.StatusCase = true;
                                             e.StatusCode = 1;
+                                            e.RootCause = caseType.RootCause;
                                         }
                                         #endregion
 
@@ -903,6 +905,7 @@ namespace WpfTestCase
                                                 e.StatusCase = true;
                                                 e.StatusCode = 7;
                                                 caseType.StatusCase = true;
+                                                e.RootCause = caseType.RootCause;
                                             }
 
                                         }
@@ -917,6 +920,7 @@ namespace WpfTestCase
                                                 e.CaseReviews = caseType.CaseTypeReviews;
                                                 e.StatusCase = true;
                                                 e.StatusCode = 2;
+                                                e.RootCause = caseType.RootCause;
                                             }
                                         }
                                         #endregion
@@ -930,6 +934,7 @@ namespace WpfTestCase
                                                 e.CaseReviews = caseType.CaseTypeReviews;
                                                 e.StatusCase = true;
                                                 e.StatusCode = 3;
+                                                e.RootCause = caseType.RootCause;
                                             }
                                         }
                                         #endregion
@@ -943,6 +948,7 @@ namespace WpfTestCase
                                                 e.CaseReviews = caseType.CaseTypeReviews;
                                                 e.StatusCase = true;
                                                 e.StatusCode = 4;
+                                                e.RootCause = caseType.RootCause;
                                             }
                                         }
                                         #endregion
@@ -956,6 +962,7 @@ namespace WpfTestCase
                                                 e.CaseReviews = caseType.CaseTypeReviews;
                                                 e.StatusCase = true;
                                                 e.StatusCode = 5;
+                                                e.RootCause = caseType.RootCause;
                                             }
                                         }
                                         #endregion
@@ -969,6 +976,7 @@ namespace WpfTestCase
                                                 e.CaseReviews = caseType.CaseTypeReviews;
                                                 e.StatusCase = true;
                                                 e.StatusCode = 6;
+                                                e.RootCause = caseType.RootCause;
                                             }
                                         }
                                         #endregion
@@ -979,6 +987,7 @@ namespace WpfTestCase
                                             e.CaseReviews = "Special case";
                                             e.StatusCase = true;
                                             e.StatusCode = 99;
+                                            e.RootCause = caseType.RootCause;
                                         }
                                         #endregion
 
@@ -996,6 +1005,7 @@ namespace WpfTestCase
                                             e.CaseReviews = "Ignore Pattern Flow";
                                             e.StatusCase = true;
                                             e.StatusCode = 99;
+                                            //e.RootCause = "Ignore Pattern Flow";
                                         }
 
                                     }
@@ -1038,6 +1048,7 @@ namespace WpfTestCase
         }
 
         //1. Server DS Down ชั่วคราว
+        //1. Server DS Down ชั่วคราว
         public async Task<CaseType> TempServerDSDown(List<TbEvents> lstEvents)
         {
             CaseType caseType = new CaseType();
@@ -1048,12 +1059,15 @@ namespace WpfTestCase
                 {
                     caseType.StatusCase = true;
                     caseType.CaseTypeReviews = "Server DS Down ชั่วคราว";
+                    var data = res.FirstOrDefault(x => x.HttpStatus != "200");
+                    caseType.RootCause = $"RowId:{data.Id.ToString()} Response:{data.Resp}";
                 }
             }
             catch { }
             return await Task.FromResult(caseType);
         }
 
+        //2. logic Stock หน้า web คำนวนผิด  //O5544345//O5598901//5620571//5615499//5652193
         //2. logic Stock หน้า web คำนวนผิด  //O5544345//O5598901//5620571//5615499//5652193
         public async Task<CaseType> WebStockLogicError(JsonDSRequest bReq, JsonDSResponse aResp)
         {
@@ -1128,6 +1142,8 @@ namespace WpfTestCase
                 {
                     caseType.StatusCase = true;
                     caseType.CaseTypeReviews = "logic Stock หน้า web คำนวนผิด";
+                    string result = string.Join(Environment.NewLine, insufficientItems);
+                    caseType.RootCause = result;
                 }
                 return caseType;
             }
@@ -1139,10 +1155,11 @@ namespace WpfTestCase
         }
 
         //3. Stock ds หมดระหว่างจองคิว//O6021351//O6029970
-
+        //3. Stock ds หมดระหว่างจองคิว//O6021351//O6029970
         public async Task<CaseType> StockDSOutDuringQueue(JsonDSRequest bReq, JsonDSResponse aResp, JsonDSResponse cResp)
         {
             CaseType caseType = new CaseType();
+            var insufficientItems = new List<string>();
             try
             {
                 if (bReq.ReserveDataItems.Any())
@@ -1207,10 +1224,11 @@ namespace WpfTestCase
 
                             if ((foundInA && foundInC))
                             {
-                                var insufficientItems = new List<string>();
-                                // insufficientItems.Add($"QStyle:{reqGroup.QStyle} ArtNo:{artNo} | Stock:{respStockQty} < Request:{reqQty}");
+                                insufficientItems.Add($"QStyle:{qStyle} ArtNo:{artNo}");
                                 caseType.StatusCase = true;
                                 caseType.CaseTypeReviews = "Stock ds หมดระหว่างจองคิว";
+                                string result = string.Join(Environment.NewLine, insufficientItems);
+                                caseType.RootCause = result;
                                 return await Task.FromResult(caseType);
                             }
                         }
@@ -1228,6 +1246,7 @@ namespace WpfTestCase
         public async Task<CaseType> WebPurchaseAllowedZeroCapa(JsonDSRequest bReq, JsonDSResponse aResp)
         {
             CaseType caseType = new CaseType();
+            var insufficientItems = new List<string>();
             try
             {
                 var bBoxReq = new List<ReserveDataItems>();
@@ -1307,10 +1326,12 @@ namespace WpfTestCase
                                     }
                                     if (foundArtNo && foundTime)
                                     {
-                                        var insufficientItems = new List<string>();
-                                        // insufficientItems.Add($"QStyle:{reqGroup.QStyle} ArtNo:{artNo} | Stock:{respStockQty} < Request:{reqQty}");
+                                       
+                                        insufficientItems.Add($"QStyle:{qStyle} ArtNo:{artNo}");
                                         caseType.StatusCase = true;
                                         caseType.CaseTypeReviews = "Capa เป็น 0 หน้า web ปล่อยซื้อได้ ";
+                                        string result = string.Join(Environment.NewLine, insufficientItems);
+                                        caseType.RootCause = result;
                                         return await Task.FromResult(caseType);
                                     }
                                 }
@@ -1330,6 +1351,7 @@ namespace WpfTestCase
         public async Task<CaseType> QueueBlockedZeroCapaDS(JsonDSRequest bReq, JsonDSResponse aResp, JsonDSResponse cResp)
         {
             CaseType caseType = new CaseType();
+            var insufficientItems = new List<string>();
             try
             {
                 var bBoxReq = new List<ReserveDataItems>();
@@ -1479,10 +1501,13 @@ namespace WpfTestCase
 
                                 if (aBoxRes && cBoxRes)
                                 {
-                                    var insufficientItems = new List<string>();
+                                   
                                     // insufficientItems.Add($"QStyle:{reqGroup.QStyle} ArtNo:{artNo} | Stock:{respStockQty} < Request:{reqQty}");
                                     caseType.StatusCase = true;
                                     caseType.CaseTypeReviews = "Capa ds เป็น 0 ระหว่างจองคิว";
+                                    insufficientItems.Add($"QStyle:{qStyle} ArtNo:{artNo}");
+                                    string result = string.Join(Environment.NewLine, insufficientItems);
+                                    caseType.RootCause = result;
                                     return await Task.FromResult(caseType);
                                 }
                             }
@@ -1501,6 +1526,7 @@ namespace WpfTestCase
             CaseType caseType = new CaseType();
             string _QStyle = "";
             string _artNo = "";
+            var insufficientItems = new List<string>();
             try
             {
                 var bBoxReq = new List<ReserveDataItems>();
@@ -1651,7 +1677,9 @@ namespace WpfTestCase
 
                                 if (aBoxRes && cBoxRes)
                                 {
-                                    var insufficientItems = new List<string>();
+                                    insufficientItems.Add($"QStyle:{qStyle} ArtNo:{artNo}");
+                                    string result = string.Join(Environment.NewLine, insufficientItems);
+                                    caseType.RootCause = result;
                                     // insufficientItems.Add($"QStyle:{reqGroup.QStyle} ArtNo:{artNo} | Stock:{respStockQty} < Request:{reqQty}");
                                     caseType.StatusCase = true;
                                     caseType.CaseTypeReviews = "Capa ds มี Stock มี จองคิวไม่ได้";
@@ -1706,7 +1734,8 @@ namespace WpfTestCase
                 try
                 {
                     // 4. Export the data
-                    ExportOrdersToExcel(ordersList, saveFileDialog.FileName);
+                    ExcelExporter  epEcel = new ExcelExporter();
+                    epEcel.ExportOrdersToExcel(ordersList, saveFileDialog.FileName);
 
                     // 5. Show success message
                     var result = MessageBox.Show(
@@ -1733,155 +1762,7 @@ namespace WpfTestCase
                 }
             }
         }
-
-        private void ExportOrdersToExcel(List<Order> orders, string filePath)
-        {
-            using var spreadsheet = SpreadsheetDocument.Create(filePath, SpreadsheetDocumentType.Workbook);
-
-            var workbookPart = spreadsheet.AddWorkbookPart();
-            workbookPart.Workbook = new Workbook();
-
-            var sheetData1 = new SheetData();
-            var worksheetPart1 = workbookPart.AddNewPart<WorksheetPart>();
-            worksheetPart1.Worksheet = new Worksheet(sheetData1);
-
-            var sheets = spreadsheet.WorkbookPart.Workbook.AppendChild(new Sheets());
-            var sheet1 = new Sheet() { Id = spreadsheet.WorkbookPart.GetIdOfPart(worksheetPart1), SheetId = 1, Name = "Orders" };
-            sheets.Append(sheet1);
-
-            // Header
-            var headerRow = new Row();
-            string[] headers = { "ORDER_ID", "CASE REVIEWS", "ERROR" };
-            foreach (var header in headers)
-                headerRow.Append(CreateCell(header));
-            sheetData1.Append(headerRow);
-
-            // Data
-            foreach (var order in orders)
-            {
-                var row = new Row();
-                row.Append(CreateCell(order.OrderId.ToString()));
-                row.Append(CreateCell(order.CaseReviews));
-                row.Append(CreateCell(order.Error));
-                sheetData1.Append(row);
-            }
-
-            worksheetPart1.Worksheet.Save();
-
-            // ==== Sheet 2 for Pie Chart ====
-            var worksheetPart2 = workbookPart.AddNewPart<WorksheetPart>();
-            worksheetPart2.Worksheet = new Worksheet(new SheetData());
-            var sheet2 = new Sheet() { Id = spreadsheet.WorkbookPart.GetIdOfPart(worksheetPart2), SheetId = 2, Name = "Chart" };
-            sheets.Append(sheet2);
-
-            DrawingsPart drawingsPart = worksheetPart2.AddNewPart<DrawingsPart>();
-            worksheetPart2.Worksheet.Append(new Drawing { Id = worksheetPart2.GetIdOfPart(drawingsPart) });
-
-            var data = orders
-                .GroupBy(o => o.CaseReviews)
-                .Select((g, idx) => (Label: g.Key ?? "Unknown", Count: g.Count()))
-                .ToList();
-
-            CreatePieChartContent(drawingsPart, data);
-        }
-
-
-        private Cell CreateCell(string value)
-        {
-            return new Cell
-            {
-                CellValue = new CellValue(value),
-                DataType = CellValues.String
-            };
-        }
-
-        private void CreatePieChartContent(DrawingsPart drawingsPart, List<(string Label, int Count)> grouped)
-        {
-            ChartPart chartPart = drawingsPart.AddNewPart<ChartPart>();
-            chartPart.ChartSpace = new C.ChartSpace();
-            chartPart.ChartSpace.Append(new C.EditingLanguage() { Val = "en-US" });
-
-            C.Chart chart = chartPart.ChartSpace.AppendChild(new C.Chart());
-            C.PlotArea plotArea = chart.AppendChild(new C.PlotArea());
-
-            var layout = new C.Layout();
-            var pieChart = plotArea.AppendChild(new C.PieChart());
-            pieChart.Append(new C.VaryColors() { Val = true });
-
-            var series = pieChart.AppendChild(new C.PieChartSeries(
-                new C.Index() { Val = 0U },
-                new C.Order() { Val = 0U },
-                new C.SeriesText(new C.NumericValue() { Text = "Chart Series" })
-            ));
-
-            // Category Axis Data (X)
-            var categoryAxisData = new C.CategoryAxisData();
-            var stringLiteral = new C.StringLiteral();
-            stringLiteral.Append(new C.PointCount() { Val = (uint)grouped.Count });
-
-            uint i = 0;
-            foreach (var item in grouped)
-            {
-                stringLiteral.Append(new C.StringPoint()
-                {
-                    Index = i++,
-                    NumericValue = new C.NumericValue(item.Label)
-                });
-            }
-            categoryAxisData.Append(stringLiteral);
-            series.Append(categoryAxisData);
-
-            // Values (Y)
-            var values = new C.Values();
-            var numberLiteral = new C.NumberLiteral();
-            numberLiteral.Append(new C.FormatCode("General"));
-            numberLiteral.Append(new C.PointCount() { Val = (uint)grouped.Count });
-
-            i = 0;
-            foreach (var item in grouped)
-            {
-                numberLiteral.Append(new C.NumericPoint()
-                {
-                    Index = i++,
-                    NumericValue = new C.NumericValue(item.Count.ToString())
-                });
-            }
-            values.Append(numberLiteral);
-            series.Append(values);
-
-            plotArea.Append(new C.Layout());
-            chart.Append(new C.AutoTitleDeleted() { Val = true });
-
-            chartPart.ChartSpace.Save();
-
-            // Add relationship ID to drawing anchor
-            var twoCellAnchor = new TwoCellAnchor(
-                new Xdr.FromMarker(
-                    new ColumnId("0"),
-                    new ColumnOffset("0"),
-                    new RowId("0"),
-                    new RowOffset("0")),
-                new Xdr.ToMarker(
-                    new ColumnId("8"),
-                    new ColumnOffset("0"),
-                    new RowId("30"),
-                    new RowOffset("0")),
-                new Xdr.GraphicFrame(
-                    new Xdr.NonVisualGraphicFrameProperties(
-                        new Xdr.NonVisualDrawingProperties() { Id = 2U, Name = "Pie Chart" },
-                        new Xdr.NonVisualGraphicFrameDrawingProperties()),
-                    new Transform(new A.Offset() { X = 0L, Y = 0L },
-                                  new A.Extents() { Cx = 5486400L, Cy = 3200400L }),
-                    new A.Graphic(new A.GraphicData(
-                        new C.ChartReference() { Id = drawingsPart.GetIdOfPart(chartPart) })
-                    { Uri = "http://schemas.openxmlformats.org/drawingml/2006/chart" }))
-                )
-            { EditAs = EditAsValues.OneCell };
-
-            drawingsPart.WorksheetDrawing ??= new WorksheetDrawing();
-            drawingsPart.WorksheetDrawing.Append(twoCellAnchor);
-            drawingsPart.WorksheetDrawing.Save();
-        }
     }
 }
+
 
