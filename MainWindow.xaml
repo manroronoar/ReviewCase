@@ -31,7 +31,7 @@
             <Label Content="" Width="60" Name="lblPass"/>
             <Label Content="Failed" Width="60"/>
             <Label Content="" Width="60" Name="lblFailed"/>
-            <Button Content="Export Excel" Click="ExportExcel_Click"/>
+            <Button Content="Export Excel" Click="ExportExcel_Click" Margin="50,0,0,0" />
         </StackPanel>
 
         <!-- Progress Bar -->

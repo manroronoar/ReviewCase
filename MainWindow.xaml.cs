@@ -11,6 +11,11 @@ using Dapper;
 using Newtonsoft.Json;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Drawing;
+using Xdr = DocumentFormat.OpenXml.Drawing.Spreadsheet;
+using A = DocumentFormat.OpenXml.Drawing;
+using C = DocumentFormat.OpenXml.Drawing.Charts;
+using X14 = DocumentFormat.OpenXml.Office2010.Excel;
+using DocumentFormat.OpenXml.Drawing.Spreadsheet;
 
 
 namespace WpfTestCase
@@ -1091,7 +1096,7 @@ namespace WpfTestCase
                            .Where(d => d.ArtNo == artNo)
                            .ToList();
 
-                           // bool foundMatching = false; 
+                            // bool foundMatching = false; 
 
                             foreach (var item in matchingRespItems)
                             {
@@ -1731,60 +1736,55 @@ namespace WpfTestCase
 
         private void ExportOrdersToExcel(List<Order> orders, string filePath)
         {
-            using (var spreadsheet = SpreadsheetDocument.Create(filePath, SpreadsheetDocumentType.Workbook))
+            using var spreadsheet = SpreadsheetDocument.Create(filePath, SpreadsheetDocumentType.Workbook);
+
+            var workbookPart = spreadsheet.AddWorkbookPart();
+            workbookPart.Workbook = new Workbook();
+
+            var sheetData1 = new SheetData();
+            var worksheetPart1 = workbookPart.AddNewPart<WorksheetPart>();
+            worksheetPart1.Worksheet = new Worksheet(sheetData1);
+
+            var sheets = spreadsheet.WorkbookPart.Workbook.AppendChild(new Sheets());
+            var sheet1 = new Sheet() { Id = spreadsheet.WorkbookPart.GetIdOfPart(worksheetPart1), SheetId = 1, Name = "Orders" };
+            sheets.Append(sheet1);
+
+            // Header
+            var headerRow = new Row();
+            string[] headers = { "ORDER_ID", "CASE REVIEWS", "ERROR" };
+            foreach (var header in headers)
+                headerRow.Append(CreateCell(header));
+            sheetData1.Append(headerRow);
+
+            // Data
+            foreach (var order in orders)
             {
-                // Create workbook parts
-                var workbookPart = spreadsheet.AddWorkbookPart();
-                workbookPart.Workbook = new Workbook();
-
-                var worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
-                worksheetPart.Worksheet = new Worksheet(new SheetData());
-
-                // Add sheets to the workbook
-                var sheets = workbookPart.Workbook.AppendChild(new Sheets());
-                var sheet = new Sheet()
-                {
-                    Id = workbookPart.GetIdOfPart(worksheetPart),
-                    SheetId = 1,
-                    Name = "Orders"
-                };
-                sheets.Append(sheet);
-
-                // Get the sheet data
-                var sheetData = worksheetPart.Worksheet.GetFirstChild<SheetData>();
-
-                // Add header row
-                var headerRow = new Row();
-                string[] headers = { "ORDER_ID", "CASE REVIEWS", "ERROR" };
-
-                foreach (var header in headers)
-                {
-                    headerRow.Append(new Cell
-                    {
-                        CellValue = new CellValue(header),
-                        DataType = CellValues.String,
-                        StyleIndex = 1 // Bold style if you have styles
-                    });
-                }
-                sheetData.Append(headerRow);
-
-                // Add data rows
-                foreach (var order in orders)
-                {
-                    var row = new Row();
-
-                    row.Append(CreateCell(order.OrderId.ToString()));
-                    row.Append(CreateCell(order.CaseReviews));
-                    row.Append(CreateCell(order.Error));
-                    //row.Append(CreateCell(order.TotalAmount.ToString("N2")));
-                    //row.Append(CreateCell(order.Status));
-
-                    sheetData.Append(row);
-                }
-
-                worksheetPart.Worksheet.Save();
+                var row = new Row();
+                row.Append(CreateCell(order.OrderId.ToString()));
+                row.Append(CreateCell(order.CaseReviews));
+                row.Append(CreateCell(order.Error));
+                sheetData1.Append(row);
             }
+
+            worksheetPart1.Worksheet.Save();
+
+            // ==== Sheet 2 for Pie Chart ====
+            var worksheetPart2 = workbookPart.AddNewPart<WorksheetPart>();
+            worksheetPart2.Worksheet = new Worksheet(new SheetData());
+            var sheet2 = new Sheet() { Id = spreadsheet.WorkbookPart.GetIdOfPart(worksheetPart2), SheetId = 2, Name = "Chart" };
+            sheets.Append(sheet2);
+
+            DrawingsPart drawingsPart = worksheetPart2.AddNewPart<DrawingsPart>();
+            worksheetPart2.Worksheet.Append(new Drawing { Id = worksheetPart2.GetIdOfPart(drawingsPart) });
+
+            var data = orders
+                .GroupBy(o => o.CaseReviews)
+                .Select((g, idx) => (Label: g.Key ?? "Unknown", Count: g.Count()))
+                .ToList();
+
+            CreatePieChartContent(drawingsPart, data);
         }
+
 
         private Cell CreateCell(string value)
         {
@@ -1793,6 +1793,94 @@ namespace WpfTestCase
                 CellValue = new CellValue(value),
                 DataType = CellValues.String
             };
+        }
+
+        private void CreatePieChartContent(DrawingsPart drawingsPart, List<(string Label, int Count)> grouped)
+        {
+            ChartPart chartPart = drawingsPart.AddNewPart<ChartPart>();
+            chartPart.ChartSpace = new C.ChartSpace();
+            chartPart.ChartSpace.Append(new C.EditingLanguage() { Val = "en-US" });
+
+            C.Chart chart = chartPart.ChartSpace.AppendChild(new C.Chart());
+            C.PlotArea plotArea = chart.AppendChild(new C.PlotArea());
+
+            var layout = new C.Layout();
+            var pieChart = plotArea.AppendChild(new C.PieChart());
+            pieChart.Append(new C.VaryColors() { Val = true });
+
+            var series = pieChart.AppendChild(new C.PieChartSeries(
+                new C.Index() { Val = 0U },
+                new C.Order() { Val = 0U },
+                new C.SeriesText(new C.NumericValue() { Text = "Chart Series" })
+            ));
+
+            // Category Axis Data (X)
+            var categoryAxisData = new C.CategoryAxisData();
+            var stringLiteral = new C.StringLiteral();
+            stringLiteral.Append(new C.PointCount() { Val = (uint)grouped.Count });
+
+            uint i = 0;
+            foreach (var item in grouped)
+            {
+                stringLiteral.Append(new C.StringPoint()
+                {
+                    Index = i++,
+                    NumericValue = new C.NumericValue(item.Label)
+                });
+            }
+            categoryAxisData.Append(stringLiteral);
+            series.Append(categoryAxisData);
+
+            // Values (Y)
+            var values = new C.Values();
+            var numberLiteral = new C.NumberLiteral();
+            numberLiteral.Append(new C.FormatCode("General"));
+            numberLiteral.Append(new C.PointCount() { Val = (uint)grouped.Count });
+
+            i = 0;
+            foreach (var item in grouped)
+            {
+                numberLiteral.Append(new C.NumericPoint()
+                {
+                    Index = i++,
+                    NumericValue = new C.NumericValue(item.Count.ToString())
+                });
+            }
+            values.Append(numberLiteral);
+            series.Append(values);
+
+            plotArea.Append(new C.Layout());
+            chart.Append(new C.AutoTitleDeleted() { Val = true });
+
+            chartPart.ChartSpace.Save();
+
+            // Add relationship ID to drawing anchor
+            var twoCellAnchor = new TwoCellAnchor(
+                new Xdr.FromMarker(
+                    new ColumnId("0"),
+                    new ColumnOffset("0"),
+                    new RowId("0"),
+                    new RowOffset("0")),
+                new Xdr.ToMarker(
+                    new ColumnId("8"),
+                    new ColumnOffset("0"),
+                    new RowId("30"),
+                    new RowOffset("0")),
+                new Xdr.GraphicFrame(
+                    new Xdr.NonVisualGraphicFrameProperties(
+                        new Xdr.NonVisualDrawingProperties() { Id = 2U, Name = "Pie Chart" },
+                        new Xdr.NonVisualGraphicFrameDrawingProperties()),
+                    new Transform(new A.Offset() { X = 0L, Y = 0L },
+                                  new A.Extents() { Cx = 5486400L, Cy = 3200400L }),
+                    new A.Graphic(new A.GraphicData(
+                        new C.ChartReference() { Id = drawingsPart.GetIdOfPart(chartPart) })
+                    { Uri = "http://schemas.openxmlformats.org/drawingml/2006/chart" }))
+                )
+            { EditAs = EditAsValues.OneCell };
+
+            drawingsPart.WorksheetDrawing ??= new WorksheetDrawing();
+            drawingsPart.WorksheetDrawing.Append(twoCellAnchor);
+            drawingsPart.WorksheetDrawing.Save();
         }
     }
 }
