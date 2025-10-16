@@ -1250,6 +1250,7 @@ namespace WpfTestCase
         {
             CaseType caseType = new CaseType();
             var insufficientItems = new List<string>();
+
             try
             {
                 var bBoxReq = new List<ReserveDataItems>();
