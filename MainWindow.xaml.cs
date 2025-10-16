@@ -1013,6 +1013,9 @@ namespace WpfTestCase
                                 catch
                                 {
                                     //order = new List<Order>();
+                                    e.CaseReviews = "Special case";
+                                    e.StatusCase = true;
+                                    e.StatusCode = 99;
                                     e.OrderId = e.OrderId;
                                     e.Error = "Error : ProcessEventsStatus";
                                 }
@@ -1084,13 +1087,13 @@ namespace WpfTestCase
                     allResponseItems.AddRange(aResp.InquirySameDayRs.ReserveDataItems);
                 if (aResp.InquiryNextDayRs?.ReserveDataItems != null)
                     allResponseItems.AddRange(aResp.InquiryNextDayRs.ReserveDataItems);
-                if (aResp.InquiryDeliveryNowRs?.ReserveDataItems != null)
-                    allResponseItems.AddRange(aResp.InquiryDeliveryNowRs.ReserveDataItems);
+                if (aResp.InquiryExpressRs?.ReserveDataItems != null)
+                    allResponseItems.AddRange(aResp.InquiryExpressRs.ReserveDataItems);
 
                 // Loop ใน request
                 foreach (var reqGroup in bReq.ReserveDataItems)
                 {
-                    if (new[] { "N", "S", "X" }.Contains(reqGroup.QStyle))
+                    if (new[] { "N", "S", "X", "F" }.Contains(reqGroup.QStyle))
                     {
                         foreach (var reqItem in reqGroup.DataItems)
                         {
@@ -1171,8 +1174,8 @@ namespace WpfTestCase
                         aBoxResp.AddRange(aResp.InquirySameDayRs.ReserveDataItems);
                     if (aResp.InquiryNextDayRs?.ReserveDataItems != null)
                         aBoxResp.AddRange(aResp.InquiryNextDayRs.ReserveDataItems);
-                    if (aResp.InquiryDeliveryNowRs?.ReserveDataItems != null)
-                        aBoxResp.AddRange(aResp.InquiryDeliveryNowRs.ReserveDataItems);
+                    if (aResp.InquiryExpressRs?.ReserveDataItems != null)
+                        aBoxResp.AddRange(aResp.InquiryExpressRs.ReserveDataItems);
 
 
                     var cBoxResp = new List<ResponseReserveDataItem>();
@@ -1182,8 +1185,8 @@ namespace WpfTestCase
                         cBoxResp.AddRange(cResp.InquirySameDayRs.ReserveDataItems);
                     if (cResp.InquiryNextDayRs?.ReserveDataItems != null)
                         cBoxResp.AddRange(cResp.InquiryNextDayRs.ReserveDataItems);
-                    if (cResp.InquiryDeliveryNowRs?.ReserveDataItems != null)
-                        cBoxResp.AddRange(cResp.InquiryDeliveryNowRs.ReserveDataItems);
+                    if (cResp.InquiryExpressRs?.ReserveDataItems != null)
+                        cBoxResp.AddRange(cResp.InquiryExpressRs.ReserveDataItems);
 
 
                     foreach (var item in bReq.ReserveDataItems)
@@ -1693,12 +1696,10 @@ namespace WpfTestCase
             catch { }
             return await Task.FromResult(caseType);
         }
-
         private void Txt01_TextChanged(object sender, TextChangedEventArgs e)
         {
 
         }
-
         private void ExportExcel_Click(object sender, RoutedEventArgs e)
         {
             // 1. Get your data (replace with your actual data source)

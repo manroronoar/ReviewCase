@@ -17,7 +17,6 @@ public class ExcelExporter
         public string Label { get; set; }
         public int Count { get; set; }
     }
-
     public void ExportOrdersToExcel(IEnumerable<Order> orders, string filePath)
     {
         try
@@ -103,7 +102,6 @@ public class ExcelExporter
             throw new ApplicationException("Error creating Excel file", ex);
         }
     }
-
     private void AddBasicStylesheet(WorkbookPart workbookPart)
     {
         var stylesPart = workbookPart.AddNewPart<WorkbookStylesPart>();
@@ -115,7 +113,6 @@ public class ExcelExporter
         );
         stylesPart.Stylesheet.Save();
     }
-
     private void AddDataToWorksheet(D.SheetData sheetData, IEnumerable<Order> orders)
     {
         // Header row
@@ -141,7 +138,6 @@ public class ExcelExporter
             sheetData.Append(dataRow);
         }
     }
-
     private D.Cell CreateCell(string text, D.CellValues dataType)
     {
         return new D.Cell
@@ -150,7 +146,6 @@ public class ExcelExporter
             CellValue = new D.CellValue(text)
         };
     }
-
     private void AddChartToWorksheet(WorkbookPart workbookPart, WorksheetPart worksheetPart, IEnumerable<Order> orders)
     {
         // Create drawings part
@@ -221,24 +216,6 @@ public class ExcelExporter
                     )
                 ),
                 new X.ClientData()
-            )
-        );
-    }
-
-    private C.PieChartSeries CreatePieChartSeries_Old(List<ChartDataItem> chartData)
-    {
-        return new C.PieChartSeries(
-            new C.Index { Val = 0U },
-            new C.Order { Val = 0U },
-            new C.SeriesText(new C.NumericValue("Case Reviews Distribution")),
-              //new C.StringLiteral(), // ไม่ใช้ SeriesText เพื่อไม่แสดงข้อความ
-            CreateCategoryAxisData(chartData),
-            CreateValues(chartData),
-            new C.DataLabels(
-                new C.ShowLegendKey { Val = false },
-                new C.ShowValue { Val = true },
-                new C.ShowCategoryName { Val = true },
-                new C.ShowPercent { Val = false }
             )
         );
     }
